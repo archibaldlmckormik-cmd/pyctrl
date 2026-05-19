@@ -1,0 +1,82 @@
+########################################################
+### Instrument configurations
+########################################################
+# define the base configurations for the instrument classes
+# Use to avoid hardcoding instrument configurations in the code!!!!
+# think about it: do you prefer to modify a COM port adress once here, or correct bugs for the rest of your life for all instruments?
+
+# Steinacher 8 channels DAC
+[dac]
+cls = "dac"
+port = "COM1"
+timeout_s = 1.0
+validate_on_init = true
+
+# the national instruments data acquisition card
+[nidaq]
+cls = "nidaq"
+device = "Dev1"
+
+# the thorlabs solenoid shutter
+[shutter]
+cls = "shutterSH05"
+serialnumber = "YOUR_SH05_SERIAL"
+kinesis_path = "C:\\Program Files\\Thorlabs\\Kinesis"
+timeout_settings_ms = 5000
+validate_on_init = true
+
+# the wavelengthmeter, UDP connection to the remote server
+[wlm]
+cls = "wlm"
+IP_address = "131.152.109.117"
+port = 29957
+
+# Teledyne LeCroy oscilloscope (USBTMC via NI-VISA)
+[scope]
+cls = "scope"
+resource_name = "USB0::0x05FF::0x1023::phys-optic-31::INSTR"
+timeout_s = 10.0
+
+# Princeton Instruments spectrometer via remote UDP server
+# MATLAB reference uses PI_spec_remote('192.168.10.20', 29958)
+[spectrometer]
+cls = "spec_remote"
+srvr = "192.168.10.20"
+port = 29958
+timeout_s = 60.0
+
+# Quantum Machines OPX+ (QuantumMachinesManager host/port)
+[opx]
+cls = "opx"
+IP_address = "192.168.1.203"
+port = 80
+
+# Thorlabs optical power meter (TLPMX .NET Interop), see PD100class.m
+[pd100]
+cls = "pd100"
+interop_dll = "C:\\Program Files (x86)\\Microsoft.NET\\Primary Interop Assemblies\\Thorlabs.TLPMX_64.Interop.dll"
+# address = "USB0::..."  # optional: skip auto-discovery
+resource_index = 0
+channel = 1
+
+# Attocube ANC300 (pyserial); slot-list maps position i -> channel i+1, "-" means empty slot.
+[attocube]
+cls = "anc300"
+port = "COM11"
+baudrate = 115200
+timeout_s = 2.0
+channels = ["LP", "QWP", "HWP", "-", "-", "-"]
+
+# PicoHarp 300 time tagger (PHLib)
+[picoharp]
+cls = "pharp"
+library_path = "C:\\Windows\\System32\\phlib64.dll"
+device_index = 0
+mode = 0
+syncdiv = 1
+syncoff = 0
+inpcfd0 = [100, 5]
+inpcfd1 = [140, 10]
+binning = 128
+acqt = 60000
+offset = 0

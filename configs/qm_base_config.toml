@@ -1,0 +1,143 @@
+########################################################
+### QUANTUM MACHINE OPX+ CONFIG FILE
+########################################################
+# Basic configuration file read by the QMconfig module
+
+# controllers
+[controllers.con1.analog_outputs."1"]
+offset = 0.0
+delay = 0.0
+
+[controllers.con1.analog_outputs."2"]
+offset = 0.0
+delay = 0.0
+
+[controllers.con1.analog_outputs."3"]
+offset = 0.0
+delay = 0.0
+
+[controllers.con1.analog_outputs."4"]
+offset = 0.0
+delay = 0.0
+
+# octaves
+
+# elements
+## AOMg1, the AOM on green laser line 1
+[elements.AOMg1.singleInput]
+port = ["con1",1]
+
+[elements.AOMg1]
+intermediate_frequency = 200e6 # in Hz
+
+[elements.AOMg1.operations]
+fire_cst = "cstlaser_pulse"
+
+## AOMr1, the AOM on red laser line 1
+[elements.AOMr1.singleInput]
+port = ["con1",2]
+
+[elements.AOMr1]
+intermediate_frequency = 200e6 # in Hz
+
+[elements.AOMr1.operations]
+fire_cst = "cstlaser_pulse"
+
+## AOMr2, the AOM on red laser line 2
+[elements.AOMr2.singleInput]
+port = ["con1",3]
+
+[elements.AOMr2]
+intermediate_frequency = 200e6 # in Hz
+
+[elements.AOMr2.operations]
+fire_cst = "cstlaser_pulse"
+
+## EOMr2, the EOM on red laser line 2
+[elements.EOMr2.singleInput]
+port = ["con1",4]
+
+[elements.EOMr2]
+intermediate_frequency = 200e6 # in Hz
+
+[elements.EOMr2.operations]
+fire_cst = "cstlaser_pulse"
+
+## APD1
+[elements.APD1.outputs]
+out1 = ["con1",1]
+
+[elements.APD1]
+time_of_flight = 0.0
+smearing = 0.0
+
+[elements.APD1.operations]
+record_photons = "counter_pulse"
+
+[elements.APD1.timeTaggingParameters]
+signalThreshold = 0.0
+signalPolarity = "Below"
+derivativeThreshold = 0.0
+
+## APD2
+[elements.APD2.outputs]
+out1 = ["con1",2]
+
+[elements.APD2]
+time_of_flight = 0.0
+smearing = 0.0
+
+[elements.APD2.operations]
+record_photons = "counter_pulse"
+
+[elements.APD2.timeTaggingParameters]
+signalThreshold = 0.0
+signalPolarity = "Below"
+derivativeThreshold = 0.0
+
+
+# pulses
+## laser pulses
+[pulses.cstlaser_pulse]
+operation = "control"
+length = 16 # in ns
+[pulses.cstlaser_pulse.waveform]
+single = "basic_cst"
+
+## APD pulses
+[pulses.counter_pulse]
+operation = "measurement"
+length = 16 # in ns
+
+
+# waveforms
+[waveforms.basic_cst]
+type = "constant"
+samples = 1.0 # in V
+
+
+# digital_waveforms
+
+# integration_weights
+
+# mixers
+
+# oscillators
+
+# baked_pulses
+# baked pulse allows to define pulses psmaller than the 16ns length and at higher resolution than the 1ns sample
+# they take space, so only a few are embedded by default. beyond that you prob want to define them in the experiment file
+#doc at https://quantum-machines.github.io/Quantum-Machines-toolkit/documentation/advanced_features/baking/
+[baked_pulses.gaussian_1ns]
+element = "EOMr2"
+sampling = 1e10
+padding = "right"
+I_samples = [3.35462628e-04, 7.31802419e-04, 1.53381068e-03, 3.08871541e-03, 5.97602290e-03, 1.11089965e-02, 1.98410947e-02, 3.40474547e-02, 5.61347628e-02, 8.89216175e-02, 1.35335283e-01, 1.97898699e-01, 2.78037300e-01, 3.75311099e-01, 4.86752256e-01, 6.06530660e-01, 7.26149037e-01, 8.35270211e-01, 9.23116346e-01, 9.80198673e-01, 1.00000000e+00, 9.80198673e-01, 9.23116346e-01, 8.35270211e-01, 7.26149037e-01, 6.06530660e-01, 4.86752256e-01, 3.75311099e-01, 2.78037300e-01, 1.97898699e-01, 1.35335283e-01, 8.89216175e-02, 5.61347628e-02, 3.40474547e-02, 1.98410947e-02, 1.11089965e-02, 5.97602290e-03, 3.08871541e-03, 1.53381068e-03, 7.31802419e-04, 3.35462628e-04]
+Q_samples = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+[baked_pulses.square_1ns]
+element = "EOMr2"
+sampling = 1e9
+padding = "right"
+I_samples = [0,1,0]
+Q_samples = [0,0,0]
