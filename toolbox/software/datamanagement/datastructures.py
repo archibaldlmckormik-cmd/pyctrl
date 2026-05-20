@@ -76,7 +76,6 @@ class PulseItem:
     """
     Defines the parameters of a single (laser) pulse.
     """
-    name: str = ""
     laser_id: str = ""
     aom_amplitude: float | np.ndarray | None = None
     eom_amplitude: float | np.ndarray | None = None
@@ -125,10 +124,8 @@ class IterationItem:
     """
     Defines the parameters of a single iteration item.
     """
-    name: str = ""
     description: str = ""
     values: np.ndarray | list[float] | None = None
-    index: int | None = None
 
 # GENERIC EXPERIMENTAL DATA
 # definition of the data class "template" (a parent class for all experimental data classes)
@@ -239,6 +236,14 @@ class ExpData:
 
 # SPECIFIC EXPERIMENTAL DATA
 # RFspectra experiment data class
+@dataclass
+class XYZScanData(ExpData):
+    """
+    Defines the data structure for the RF spectra experiment.
+    """
+    pass
+
+
 @dataclass
 class RfSpectraData(ExpData):
     """

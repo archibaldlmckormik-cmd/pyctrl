@@ -1,6 +1,8 @@
 # author: yannik fontana, creation date: 11.05.2026
 """
 Base experiment: instrument session, required hardware, ``setup`` / ``run`` / ``save`` hooks.
+DO NOT MODIFY IF NOT NECESSARY
+=> THIS CLASS IS USED TO CREATE NEW EXPERIMENTS
 """
 from __future__ import annotations
 
@@ -28,7 +30,7 @@ class GenericExp:
 
     def __init__(self, session: Session) -> None:
         self.session = session
-        self.required_instruments = None
+        self.setup()
         self.confirm_instruments()
 
     def confirm_instruments(self) -> None:
@@ -47,7 +49,8 @@ class GenericExp:
                 raise
 
     def setup(self) -> None:
-        """Prepare attributes before ``run``. Override in subclasses (e.g. construct ``data``)."""
+        """Prepare attributes before ``run``. Overwrite or complement in subclasses (e.g. construct ``data``)."""
+        self.required_instruments = None
         self.data = None
         self.result_figs: list[Any] = []
 
