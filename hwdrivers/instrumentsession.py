@@ -1,20 +1,29 @@
 # author: yannik fontana, creation date: 05.05.2026
+"""
+Lazy instrument session: load ``instr_config.toml``, open drivers on ``get()``.
+"""
+
+from __future__ import annotations
+
+import logging
 import tomllib
 from pathlib import Path
-# the packages for all instrument classes
-# add package to add one specific instrument class to be available in the session
+from typing import Any
+
+from hwdrivers.attocube.anc300 import Anc300
 from hwdrivers.baspidac.dac import Dac
-from hwdrivers.shutterSH05.shutterSH05 import ShutterSH05
-from hwdrivers.nidaq.nidaq import Nidaq
 from hwdrivers.highfinesse.wlm import Wlm
 from hwdrivers.lecroy.lecroy import Scope
-from hwdrivers.spectrometer.princeton import SpecRemote
-from hwdrivers.qm_opx.qm_opx import Opx
+from hwdrivers.nidaq.nidaq import Nidaq
 from hwdrivers.powermeter.pd100 import Pd100
-from hwdrivers.attocube.anc300 import Anc300
+from hwdrivers.qm_opx.qm_opx import Opx
+from hwdrivers.shutterSH05.shutterSH05 import ShutterSH05
+from hwdrivers.spectrometer.princeton import SpecRemote
 from hwdrivers.timetagger.picoharp300 import Pharp
+
+logger = logging.getLogger(__name__)
+
 # class registry, binding the string name in the config to the actual class
-# add class to add one specific instrument class to be available in the session
 CLASS_REGISTRY = {
     "opx": Opx,
     "dac": Dac,
@@ -30,35 +39,83 @@ CLASS_REGISTRY = {
 
 DEFAULT_CONFIG_PATH = Path(__file__).parents[1] / "configs" / "instr_config.toml"
 
+
 class Session:
-    def __init__(self, config_path: Path = DEFAULT_CONFIG_PATH):
-        with open(config_path, "rb") as f:
-            raw_cfg = tomllib.load(f)
-        # resolve string class names to actual classes
-        self._config = {}
+    """Instrument pool backed by ``instr_config.toml``; drivers open on first ``get``."""
+
+    def __init__(self, config_path: str | Path = DEFAULT_CONFIG_PATH) -> None:
+        config_path = Path(config_path)
+        try:
+            with open(config_path, "rb") as f:
+                raw_cfg = tomllib.load(f)
+        except OSError as exc:
+            logger.error(
+                "Session: cannot read instrument config %s: %s",
+                config_path,
+                exc,
+            )
+            raise
+        except tomllib.TOMLDecodeError as exc:
+            logger.error("Session: invalid TOML in %s: %s", config_path, exc)
+            raise
+
+        self._config: dict[str, dict[str, Any]] = {}
         for name, params in raw_cfg.items():
-            cfg = params.copy()
-            cfg["cls"] = CLASS_REGISTRY[cfg["cls"]]
+            cfg = dict(params)
+            cls_name = cfg.get("cls")
+            if cls_name not in CLASS_REGISTRY:
+                logger.error(
+                    "Session: unknown instrument class %r for %r; registry keys: %s",
+                    cls_name,
+                    name,
+                    sorted(CLASS_REGISTRY),
+                )
+                raise KeyError(
+                    f"Unknown instrument class {cls_name!r} for instrument {name!r}"
+                )
+            cfg["cls"] = CLASS_REGISTRY[cls_name]
             self._config[name] = cfg
 
-        self._instruments = {}
+        self._instruments: dict[str, Any] = {}
+        logger.info(
+            "Session: loaded %d instrument(s) from %s",
+            len(self._config),
+            config_path,
+        )
 
-    def get(self, name: str):
-        if name not in self._instruments:
-            if name not in self._config:
-                raise KeyError(f"Instrument '{name}' not found in config")
-            cfg = self._config[name].copy()
-            cls = cfg.pop("cls")
-            self._instruments[name] = cls(**cfg)
-        return self._instruments[name]
+    def get(self, name: str) -> Any:
+        if name in self._instruments:
+            return self._instruments[name]
 
-    def close_all(self):
-        for inst in self._instruments.values():
-            inst.close()
+        if name not in self._config:
+            logger.error("Session: instrument %r not found in config", name)
+            raise KeyError(f"Instrument {name!r} not found in config")
+
+        cfg = self._config[name].copy()
+        cls = cfg.pop("cls")
+        try:
+            inst = cls(**cfg)
+        except Exception as exc:
+            logger.error("Session: failed to build instrument %r: %s", name, exc)
+            raise RuntimeError(f"Session: failed to build instrument {name!r}") from exc
+
+        self._instruments[name] = inst
+        logger.info("Session: opened instrument %r (%s)", name, cls.__name__)
+        return inst
+
+    def close_all(self) -> None:
+        if not self._instruments:
+            return
+        for name, inst in list(self._instruments.items()):
+            try:
+                inst.close()
+                logger.info("Session: closed instrument %r", name)
+            except Exception as exc:
+                logger.warning("Session: close failed for %r: %s", name, exc)
         self._instruments.clear()
 
-    def __enter__(self):
+    def __enter__(self) -> Session:
         return self
 
-    def __exit__(self, *_):
+    def __exit__(self, *_: object) -> None:
         self.close_all()
