@@ -237,11 +237,15 @@ class ExpData:
 # SPECIFIC EXPERIMENTAL DATA
 # RFspectra experiment data class
 @dataclass
-class XYZScanData(ExpData):
+class ScanXY_ZData(ExpData):
     """
     Defines the data structure for the RF spectra experiment.
     """
-    pass
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self.pulses["AOMg1"] = PulseItem(laser_id="green_532", frequency=563.8, envelope="rectangular")
+        self.iterations["repeat_per_pixel"] = IterationItem(description="number of pulses per pixel", values=1)
+        self.signals = {"counts": np.array([]), "z_offset": np.array([])}
 
 
 @dataclass
