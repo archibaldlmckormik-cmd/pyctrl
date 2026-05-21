@@ -109,7 +109,47 @@ class Opx:
     port: int
         Port number of the OPX+ quantum machine.
     """
-    
+
+    CLOCK_CYCLE_NS: int = 4
+    MIN_PULSEWIDTH_NS: int = 16
+
+    @classmethod
+    def seconds_to_cycles(cls, seconds: float, name: str = "duration") -> int:
+        """Convert a duration in seconds to an integer number of OPX clock cycles."""
+        if seconds <= 0:
+            logger.error("Opx: %s must be > 0, got %s", name, seconds)
+            raise ValueError(f"{name} must be > 0")
+
+        ns = float(seconds) * 1e9
+        ns_i = int(round(ns))
+        if abs(ns - ns_i) > 1e-6:
+            logger.error(
+                "Opx: %s=%s s does not map to an integer ns duration.",
+                name,
+                seconds,
+            )
+            raise ValueError(f"{name} must map to an integer number of ns")
+
+        if ns_i < cls.MIN_PULSEWIDTH_NS:
+            logger.error(
+                "Opx: %s=%d ns is below minimum pulse length %d ns.",
+                name,
+                ns_i,
+                cls.MIN_PULSEWIDTH_NS,
+            )
+            raise ValueError(f"{name} must be >= {cls.MIN_PULSEWIDTH_NS} ns")
+
+        if ns_i % cls.CLOCK_CYCLE_NS != 0:
+            logger.error(
+                "Opx: %s=%d ns is not divisible by %d ns.",
+                name,
+                ns_i,
+                cls.CLOCK_CYCLE_NS,
+            )
+            raise ValueError(f"{name} must be divisible by {cls.CLOCK_CYCLE_NS} ns")
+
+        return ns_i // cls.CLOCK_CYCLE_NS
+
     def __init__(self, IP_address: str, port: int = 80):
         self.qmm = QuantumMachinesManager(host=IP_address, port=port)
         self._qm = None 
@@ -158,10 +198,6 @@ class Opx:
         - With ``apd=1`` or ``apd=2``, only that analog input is measured and aligned.
         - Timing is validated against OPX clock constraints (4 ns cycle, >=16 ns pulse).
         """
-        # some QM constraints
-        clock_ns = 4
-        min_pulse_ns = 16
-
         # collect active optical elements
         active_elements: dict[str, float] = {}
         for name, value in {
@@ -183,48 +219,12 @@ class Opx:
 
         apd_elements = ["APD1", "APD2"] if apd is None else [f"APD{apd}"]
 
-        # Annex subfunctions
-        def _seconds_to_cycles_checked(name: str, seconds: float) -> int:
-            if seconds <= 0:
-                logger.error("quasicw_counts: %s must be > 0, got %s", name, seconds)
-                raise ValueError(f"{name} must be > 0")
-
-            ns = float(seconds) * 1e9
-            ns_i = int(round(ns))
-            if abs(ns - ns_i) > 1e-6:
-                logger.error(
-                    "quasicw_counts: %s=%s s does not map to an integer ns duration.",
-                    name,
-                    seconds,
-                )
-                raise ValueError(f"{name} must map to an integer number of ns")
-
-            if ns_i < min_pulse_ns:
-                logger.error(
-                    "quasicw_counts: %s=%d ns is below minimum pulse length %d ns.",
-                    name,
-                    ns_i,
-                    min_pulse_ns,
-                )
-                raise ValueError(f"{name} must be >= {min_pulse_ns} ns")
-
-            if ns_i % clock_ns != 0:
-                logger.error(
-                    "quasicw_counts: %s=%d ns is not divisible by %d ns.",
-                    name,
-                    ns_i,
-                    clock_ns,
-                )
-                raise ValueError(f"{name} must be divisible by {clock_ns} ns")
-
-            return ns_i // clock_ns
-
         if apd is None:
 
             def _measure_chunk(
                 dur_cycles: int, counts1, counts2, total, times1, times2
             ) -> None:
-                dur_ns = dur_cycles * clock_ns
+                dur_ns = dur_cycles * self.CLOCK_CYCLE_NS
                 qua.measure(
                     "record_photons",
                     "APD1",
@@ -242,7 +242,7 @@ class Opx:
         else:
 
             def _measure_chunk(dur_cycles: int, counts, total, times) -> None:
-                dur_ns = dur_cycles * clock_ns
+                dur_ns = dur_cycles * self.CLOCK_CYCLE_NS
                 qua.measure(
                     "record_photons",
                     apd_elements[0],
@@ -266,19 +266,18 @@ class Opx:
             logger.error("quasicw_counts: no active optical element amplitude provided.")
             raise ValueError("At least one element amplitude must be provided.")
 
-        total_cycles = _seconds_to_cycles_checked("t_s", t_s)
+        total_cycles = self.seconds_to_cycles(t_s, name="t_s")
         if chunk_s <= 0:
             logger.warning(
                 "quasicw_counts: chunk_s=%s is invalid, using minimum chunk of %d ns.",
                 chunk_s,
-                min_pulse_ns,
+                self.MIN_PULSEWIDTH_NS,
             )
-            chunk_cycles = min_pulse_ns // clock_ns
+            chunk_cycles = self.MIN_PULSEWIDTH_NS // self.CLOCK_CYCLE_NS
         else:
             chunk_ns = int(round(float(chunk_s) * 1e9))
-            chunk_ns = max(min_pulse_ns, chunk_ns)
-            # auto-adjust to nearest multiple of the 4 ns OPX clock cycle
-            chunk_cycles = max(1, int(round(chunk_ns / clock_ns)))
+            chunk_ns = max(self.MIN_PULSEWIDTH_NS, chunk_ns)
+            chunk_cycles = max(1, int(round(chunk_ns / self.CLOCK_CYCLE_NS)))
 
         n_full = total_cycles // chunk_cycles
         rem_cycles = total_cycles % chunk_cycles
