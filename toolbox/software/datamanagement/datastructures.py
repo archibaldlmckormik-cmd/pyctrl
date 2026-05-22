@@ -150,7 +150,7 @@ class ExpData:
         root = Path(_default_datafolder())
         class_name = type(self).__name__
         date_s = self.timestamp.strftime("%Y%m%d")
-        data_dir = root / f"{class_name}_data" / date_s
+        data_dir = root / f"{class_name}" / date_s
         data_dir.mkdir(parents=True, exist_ok=True)
         logger.info("Data directory: %s", data_dir)
 
