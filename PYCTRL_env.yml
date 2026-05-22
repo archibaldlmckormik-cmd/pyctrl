@@ -1,4 +1,4 @@
-name: NV326
+name: pyctrl08
 channels:
   - conda-forge
   - defaults
