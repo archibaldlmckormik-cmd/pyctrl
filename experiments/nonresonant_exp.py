@@ -98,12 +98,14 @@ class ScanXY_Z(GenericExp):
         # start timetag to measure experiment runtime
         start_time = datetime.now()
         # loop along the y axis
+        nx = self.data.cavity.x.size # number of x pixels
         for y_idx, y_value in enumerate(self.data.cavity.y):
             # smoothly ramp the y voltage
             self.dac.voltage.smooth_ramp(3, y_value)
 
             # loop along the x axis
-            for x_idx, x_value in enumerate(self.data.cavity.x):
+            for x_idx in (range(nx) if y_idx % 2 == 0 else range(nx - 1, -1, -1)):
+                x_value = self.data.cavity.x[x_idx]
                 # smoothly ramp the x voltage
                 self.dac.voltage.smooth_ramp(2, x_value)
 
@@ -160,7 +162,13 @@ class ScanXY_Z(GenericExp):
             logger.error("ScanXY_Z.plot: signals must contain counts and z_offset")
             raise ValueError("ScanXY_Z.plot: missing counts or z_offset in signals")
 
-        counts = np.asarray(data.signals["counts"], dtype=float)
+        counts = deepcopy(np.asarray(data.signals["counts"], dtype=float))
+        if data.pulses["AOMg1"].duration is not None:
+            counts = counts / data.pulses["AOMg1"].duration
+            signal_units = "Counts/s"
+        else:
+            signal_units = "Counts"
+
         z_offset = np.asarray(data.signals["z_offset"], dtype=float)
 
         ny, nx, nz = y.size, x.size, z.size
@@ -206,7 +214,7 @@ class ScanXY_Z(GenericExp):
             fig.update_layout(
                 title="ScanXY_Z — z scan",
                 xaxis_title="Cavity z (V)",
-                yaxis_title="Counts",
+                yaxis_title=signal_units,
                 annotations=[
                     dict(
                         text=f"x = {x[0]:.4f} V, y = {y[0]:.4f} V",
@@ -226,9 +234,9 @@ class ScanXY_Z(GenericExp):
                 rows=1,
                 cols=3,
                 subplot_titles=(
-                    "Z profile at max signal",
-                    "Max counts along z",
-                    "Z offset",
+                    "Cavity sweep at best location",
+                    "Max counts vs x/y",
+                    "Cavity z offset",
                 ),
             )
             if ny == 1:
@@ -279,9 +287,9 @@ class ScanXY_Z(GenericExp):
                     col=3,
                 )
                 fig.update_xaxes(title_text="Cavity z (V)", row=1, col=1)
-                fig.update_yaxes(title_text="Counts", row=1, col=1)
+                fig.update_yaxes(title_text=signal_units, row=1, col=1)
                 fig.update_xaxes(title_text="Cavity x (V)", row=1, col=2)
-                fig.update_yaxes(title_text="Counts", row=1, col=2)
+                fig.update_yaxes(title_text=signal_units, row=1, col=2)
                 fig.update_xaxes(title_text="Cavity x (V)", row=1, col=3)
                 fig.update_yaxes(title_text="Z offset (V)", row=1, col=3)
             else:
@@ -332,13 +340,13 @@ class ScanXY_Z(GenericExp):
                     col=3,
                 )
                 fig.update_xaxes(title_text="Cavity z (V)", row=1, col=1)
-                fig.update_yaxes(title_text="Counts", row=1, col=1)
+                fig.update_yaxes(title_text=signal_units, row=1, col=1)
                 fig.update_xaxes(title_text="Cavity y (V)", row=1, col=2)
-                fig.update_yaxes(title_text="Counts", row=1, col=2)
+                fig.update_yaxes(title_text=signal_units, row=1, col=2)
                 fig.update_xaxes(title_text="Cavity y (V)", row=1, col=3)
                 fig.update_yaxes(title_text="Z offset (V)", row=1, col=3)
 
-            fig.update_layout(title_text="ScanXY_Z", height=450, showlegend=False)
+            fig.update_layout(title_text=data.filename, height=450, showlegend=False)
             return [fig]
 
         # Case 1: 2D x–y grid
@@ -355,6 +363,7 @@ class ScanXY_Z(GenericExp):
         fig = make_subplots(
             rows=1,
             cols=3,
+            horizontal_spacing=0.08,
             subplot_titles=(
                 "Z profile at global max",
                 "Max counts along z",
@@ -381,13 +390,30 @@ class ScanXY_Z(GenericExp):
             row=1,
             col=1,
         )
+        def heatmap_colorbar(col: int, title: str) -> dict:
+            """Colorbar in paper coords, aligned to subplot ``col`` (Plotly cols are 1-based)."""
+            suffix = str(col) if col > 1 else ""
+            xdom = getattr(fig.layout, f"xaxis{suffix}").domain
+            ydom = getattr(fig.layout, f"yaxis{suffix}").domain
+            return dict(
+                title=title,
+                xref="paper",
+                yref="paper",
+                x=xdom[1] + 0.012,
+                xanchor="left",
+                y=(ydom[0] + ydom[1]) / 2,
+                yanchor="middle",
+                len=ydom[1] - ydom[0],
+                thickness=14,
+            )
+
         fig.add_trace(
             go.Heatmap(
                 x=x,
                 y=y,
                 z=max_along_z,
                 colorscale=ice,
-                colorbar=dict(title="Counts", len=0.6, y=0.5),
+                colorbar=heatmap_colorbar(2, signal_units),
             ),
             row=1,
             col=2,
@@ -401,17 +427,32 @@ class ScanXY_Z(GenericExp):
                 zmid=0,
                 zmin=zmin,
                 zmax=zmax,
-                colorbar=dict(title="Z offset (V)", len=0.6, y=0.5),
+                zauto=False,
+                colorbar=heatmap_colorbar(3, "Z offset (V)"),
             ),
             row=1,
             col=3,
         )
         fig.update_xaxes(title_text="Cavity z (V)", row=1, col=1)
-        fig.update_yaxes(title_text="Counts", row=1, col=1)
-        fig.update_xaxes(title_text="Cavity x (V)", row=1, col=2)
-        fig.update_yaxes(title_text="Cavity y (V)", row=1, col=2)
-        fig.update_xaxes(title_text="Cavity x (V)", row=1, col=3)
-        fig.update_yaxes(title_text="Cavity y (V)", row=1, col=3)
-        fig.update_layout(title_text="ScanXY_Z", height=450, showlegend=False)
+        fig.update_yaxes(title_text=signal_units, row=1, col=1)
+        fig.update_xaxes(title_text="Cavity x (V)", constrain="domain", row=1, col=2)
+        fig.update_yaxes(
+            title_text="Cavity y (V)",
+            scaleanchor="x2",
+            scaleratio=1,
+            constrain="domain",
+            row=1,
+            col=2,
+        )
+        fig.update_xaxes(title_text="Cavity x (V)", constrain="domain", row=1, col=3)
+        fig.update_yaxes(
+            title_text="Cavity y (V)",
+            scaleanchor="x3",
+            scaleratio=1,
+            constrain="domain",
+            row=1,
+            col=3,
+        )
+        fig.update_layout(title_text=data.filename, height=450, showlegend=False)
         return [fig]
 
