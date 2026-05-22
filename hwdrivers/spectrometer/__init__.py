@@ -1,5 +1,3 @@
-# author: yannik fontana, creation date: 05.05.2026
-from .princeton import SpecRemote
-
+# author: yannik fontana, created 05.05.2026
 __author__ = "yannik fontana"
-__all__ = ["SpecRemote"]
+__all__ = []

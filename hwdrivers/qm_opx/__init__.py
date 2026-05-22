@@ -1,4 +1,3 @@
-from .qm_opx import Opx
-
+# author: yannik fontana, created 05.05.2026
 __author__ = "yannik fontana"
-__all__ = ["Opx"]
+__all__ = []
