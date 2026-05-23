@@ -26,7 +26,7 @@ class QMConfig:
     ----------
     config_file:
         Path to the QM config TOML. If omitted, uses ``get_qmconfigpath()`` (``qmconfigpath``
-        in ``configs/path_config.toml``).
+        in path config — ``path_config.local.toml`` or ``path_config.toml``).
     """
 
     def __init__(self, config_file: str | Path | None = None):

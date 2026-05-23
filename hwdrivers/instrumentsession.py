@@ -1,6 +1,9 @@
 # author: yannik fontana, creation date: 05.05.2026
 """
-Lazy instrument session: load ``instr_config.toml``, open drivers on ``get()``.
+Lazy instrument session: load instrument config TOML, open drivers on ``get()``.
+
+Uses ``instr_config.local.toml`` when present, else ``instr_config.toml``.
+An explicit ``config_path`` bypasses that resolution.
 """
 
 from __future__ import annotations
@@ -20,6 +23,7 @@ from hwdrivers.qm_opx.qm_opx import Opx
 from hwdrivers.shutterSH05.shutterSH05 import ShutterSH05
 from hwdrivers.spectrometer.princeton import SpecRemote
 from hwdrivers.timetagger.picoharp300 import Pharp
+from toolbox.software.path_config import _resolve_config_path
 
 logger = logging.getLogger(__name__)
 
@@ -37,14 +41,14 @@ CLASS_REGISTRY = {
     "pharp": Pharp,
 }
 
-DEFAULT_CONFIG_PATH = Path(__file__).parents[1] / "configs" / "instr_config.toml"
-
-
 class Session:
-    """Instrument pool backed by ``instr_config.toml``; drivers open on first ``get``."""
+    """Instrument pool backed by instrument config TOML; drivers open on first ``get``."""
 
-    def __init__(self, config_path: str | Path = DEFAULT_CONFIG_PATH) -> None:
-        config_path = Path(config_path)
+    def __init__(self, config_path: str | Path | None = None) -> None:
+        if config_path is None:
+            config_path = _resolve_config_path("instr_config")
+        else:
+            config_path = Path(config_path)
         try:
             with open(config_path, "rb") as f:
                 raw_cfg = tomllib.load(f)

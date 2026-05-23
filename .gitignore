@@ -1,3 +1,4 @@
 .vscode/
 .cursor/
 __pycache__/
+configs/*.local.toml

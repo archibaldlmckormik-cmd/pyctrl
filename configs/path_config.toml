@@ -6,10 +6,10 @@
 # think about it: do you prefer to modify a path once here, or correct a million hardcoded paths everywhere in the code?
 
 # the path toward the root for all experiment data
-datapath = "C:/Users/FONTAN0000/Documents/testdata"
+datapath = "C:/pyctrl_data"
 
 # the path toward the root for all experiment data
-labjournalpath = "C:/Users/FONTAN0000/Documents/testlabjournal"
+labjournalpath = "C:/pyctrl_labjournal"
 
 # the path toward the quantum machine configuration file
-qmconfigpath = "C:/Users/FONTAN0000/Documents/local_python_repo/PyCtrl_proj/pyctrl/configs/qm_base_config.toml"
+qmconfigpath = "C:/pyctrl/configs/qm_base_config.toml"
