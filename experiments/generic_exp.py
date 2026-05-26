@@ -35,7 +35,7 @@ class GenericExp:
         self.setup()
 
 
-    def setup(self) -> None:
+    def setup(self,*args, **kwargs) -> None:
         """Prepare attributes before ``run``.4
         Overwrite or complement in subclasses (e.g. construct ``data`` and ``result_figs``).
         """
