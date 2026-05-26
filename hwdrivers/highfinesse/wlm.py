@@ -33,6 +33,7 @@ _PID_TOML_KEYS: dict[str, str] = {
 }
 
 _PID_COMPARE_ATOL = 1e-6
+_FREQ_UNDEREXPOSED_THZ = -3.0
 
 
 @dataclass(frozen=True)
@@ -116,11 +117,18 @@ class WlmChannel:
 
     @property
     def frequency(self) -> float:
-        """Optical frequency in THz (``GetFrequencyNum``)."""
+        """Optical frequency in THz (``GetFrequencyNum``).
+
+        Returns ``nan`` when the server reports underexposure (-3 THz).
+        """
         rep = self._wlm._send({"command": "GetFrequencyNum", "exp": self.index})
         if rep.msg == "Error: Channel number is either 1 or 2":
             raise RuntimeError(rep.msg)
-        return float(rep.msg)
+        value = float(rep.msg)
+        if value == _FREQ_UNDEREXPOSED_THZ:
+            logger.warning("wavemeter channel %d underexposed", self.index)
+            return float("nan")
+        return value
 
     @frequency.setter
     def frequency(self, freq: float) -> None:
