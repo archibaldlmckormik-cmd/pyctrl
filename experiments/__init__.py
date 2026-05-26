@@ -6,6 +6,7 @@ __author__ = "yannik fontana"
 # experiment classes should be accessible directly
 # experimental subpackages are there for organization
 # experiment modules are bypassed!
+from .nonresonant.scanhwp_z import ScanHWP_Z
 from .nonresonant.scanxy_z import ScanXY_Z
 
-__all__ = ["ScanXY_Z"]
+__all__ = ["ScanXY_Z", "ScanHWP_Z"]
