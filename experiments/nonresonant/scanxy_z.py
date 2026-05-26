@@ -42,7 +42,7 @@ class ScanXY_Z(GenericExp):
         # access the instruments
         self.opx = self.session.get("opx")
         self.dac = self.session.get("dac")
-        self.shutter = self.session.get("shutterSH05")
+        self.shutter = self.session.get("shutter")
         # make sure the dac channels 1,2,3 are on
         for channel in [1,2,3]:
             self.dac.channel_toggleONOFF(channel) if self.dac.getstatus(channel) == "OFF" else None
@@ -132,16 +132,19 @@ class ScanXY_Z(GenericExp):
         self.logrun(runtime=runtime)
         # save in data:
         self.data.run_time = runtime.total_seconds()
-
-        # save the data
-        self.data.save()
-        # update the data.tag field with experiment runtime
+        # tags
         self.data.tag.append(f"runtime: {runtime.total_seconds()} s")
-        # update the data.tag field with pulse amplitude
         aom = self.data.pulses["AOMg1"]
+        self.data.tag.append(f"laser_id: {aom.laser_id}")
         self.data.tag.append(f"pulse_amplitude: {aom.aom_amplitude} V")
         self.data.tag.append(f"pulse_duration: {aom.duration} s")
         self.data.tag.append(f"pulse_power: {aom.power} W")
+        self.data.tag.append(f"x_pixels: {self.data.cavity.x.size}")
+        self.data.tag.append(f"y_pixels: {self.data.cavity.y.size}")
+        self.data.tag.append(f"z_pixels: {self.data.cavity.z.size}")
+        # save the data
+        self.data.save()
+        
 
     @classmethod
     def plot(cls, data: ds.ScanXY_ZData) -> list[go.Figure]:
