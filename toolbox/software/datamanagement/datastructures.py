@@ -235,19 +235,44 @@ class ExpData:
         )
 
 # SPECIFIC EXPERIMENTAL DATA
-# RFspectra experiment data class
+# Non-resonant ScanXY_Z experiment data class
 @dataclass
 class ScanXY_ZData(ExpData):
     """
-    Defines the data structure for the RF spectra experiment.
+    Defines the data structure for the ScanXY_Z experiment.
     """
     def __post_init__(self) -> None:
         super().__post_init__()
         self.pulses["AOMg1"] = PulseItem(laser_id="green_532", frequency=563.8, envelope="rectangular")
         self.iterations["repeat_per_pixel"] = IterationItem(description="number of pulses per pixel", values=1)
-        self.signals = {"counts": np.array([]), "z_offset": np.array([])}
+        self.signals.update({"counts": np.array([]), "z_offset": np.array([])})
 
 
+# Non-resonant ScanHWP_Z experiment data class
+@dataclass
+class AOMCalibData(ExpData):
+    """
+    Defines the data structure for the aom calibration.
+    """
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self.iterations["read_rep"] = IterationItem(description="number of power read per voltage", values=5)
+        self.signals.update({"powermeter": np.array([]), "photodiode": np.array([])})
+
+@dataclass
+class ScanHWP_ZData(ExpData):
+    """
+    Defines the data structure for the ScanHWP_Z experiment.
+    """
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self.pulses["AOMg1"] = PulseItem(laser_id="green_532", frequency=563.8, envelope="rectangular")
+        self.iterations["repeat_per_pixel"] = IterationItem(description="number of pulses per pixel", values=1)
+        self.hwp = {"step_voltage": 50, "step_number": 10000}
+        self.signals.update({"counts": np.array([]), "z_offset": np.array([])})
+
+
+# Resonant RF spectra experiment data class
 @dataclass
 class RfSpectraData(ExpData):
     """
