@@ -114,6 +114,32 @@ class Opx:
     MIN_PULSEWIDTH_NS: int = 16
 
     @classmethod
+    def __init__(self, IP_address: str, port: int = 80):
+        self.qmm = QuantumMachinesManager(host=IP_address, port=port)
+        self._qm = None 
+
+    def open_quantum_machine(self, config: dict):
+        """Open a QM with a given config dict, closing any previous one."""
+        if self._qm is not None:
+            self._qm.close()
+        self._qm = self.qmm.open_qm(config)
+        return self._qm
+
+    @property
+    def qm(self):
+        if self._qm is None:
+            raise RuntimeError("No quantum machine open. Call open_quantum_machine() first.")
+        return self._qm
+
+    def execute(self, program):
+        """Compile and run a QUA program, return the job."""
+        return self.qm.execute(program)
+
+    def close(self):
+        if self._qm is not None:
+            self._qm.close()
+        self.qmm.close()
+
     def seconds_to_cycles(cls, seconds: float, name: str = "duration") -> int:
         """Convert a duration in seconds to an integer number of OPX clock cycles."""
         if seconds <= 0:
@@ -149,32 +175,6 @@ class Opx:
             raise ValueError(f"{name} must be divisible by {cls.CLOCK_CYCLE_NS} ns")
 
         return ns_i // cls.CLOCK_CYCLE_NS
-
-    def __init__(self, IP_address: str, port: int = 80):
-        self.qmm = QuantumMachinesManager(host=IP_address, port=port)
-        self._qm = None 
-
-    def open_quantum_machine(self, config: dict):
-        """Open a QM with a given config dict, closing any previous one."""
-        if self._qm is not None:
-            self._qm.close()
-        self._qm = self.qmm.open_qm(config)
-        return self._qm
-
-    @property
-    def qm(self):
-        if self._qm is None:
-            raise RuntimeError("No quantum machine open. Call open_quantum_machine() first.")
-        return self._qm
-
-    def execute(self, program):
-        """Compile and run a QUA program, return the job."""
-        return self.qm.execute(program)
-
-    def close(self):
-        if self._qm is not None:
-            self._qm.close()
-        self.qmm.close()
 
     # Measurement methods needing the opx as the sole hardware
     def quasicw_counts(
