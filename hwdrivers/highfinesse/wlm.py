@@ -70,7 +70,7 @@ class Wlm:
 
         if validate_on_init:
             self._startup()
-            logger.info("WLM initialized on %s:%s", self._server, self._port)
+            logger.info("WLM initialized on %s:%s", self._IP_address, self._port)
 
     def __enter__(self) -> "Wlm":
         return self
@@ -117,7 +117,7 @@ class Wlm:
 
     def _send(self, msg: dict[str, Any]) -> _WlmReply:
         payload = json.dumps(msg)
-        self._sock.sendto(payload.encode("utf-8"), (self._server, self._port))
+        self._sock.sendto(payload.encode("utf-8"), (self._IP_address, self._port))
         data, _addr = self._sock.recvfrom(65535)
         reply_text = data.decode("utf-8", errors="ignore")
         return _WlmReply.from_json(reply_text)
