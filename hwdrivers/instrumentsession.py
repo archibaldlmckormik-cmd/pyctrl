@@ -42,7 +42,13 @@ CLASS_REGISTRY = {
 }
 
 class Session:
-    """Instrument pool backed by instrument config TOML; drivers open on first ``get``."""
+    """Instrument pool backed by instrument config TOML; drivers open on first ``get``.
+    Usage:
+    with Session() as session:
+        # open you instrument here
+        your_instrument = session.get("your_instrument")
+    # the instrument will be closed automatically
+    """
 
     def __init__(self, config_path: str | Path | None = None) -> None:
         if config_path is None:
