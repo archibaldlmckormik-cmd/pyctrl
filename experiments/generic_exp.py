@@ -20,13 +20,19 @@ logger = logging.getLogger(__name__)
 class GenericExp:
     """
     Master experiment class.
-    All experiment classes derive from this class, and implement their particular version of "setup", "run", and "plot".
+    All experiment classes derive from this class, and implement their particular version of "setup", "pre_run", "run", and "plot".
+    instance methods:
     The "setup" method is used to initialize the experiment parameters and define the experiment variables
     The "run" method is the main method that performs the experimental protocol.
-    Subclasses implement ``plot(data)`` (figures only). ``plot_and_log()`` appends those
-    figures to the lab journal via ``save_to_html``.
+    The "pre_run" method is used to prepare the experiment for the run.
+    The "plot" method is used to plot the results of the experiment.
     The "save" method is used to save the results of the experiment, e.g. to save the data to a file.
-
+    The "logrun" method is used to log the runtime of the experiment to the logger.
+    The "check_for_data" method is used to check if a data instance exists. if not, propose to load one.
+    class methods:
+    The "plot_and_log" method is used to plot the results of the experiment and log the results to the lab journal.
+    it leverages the "plot" method usually overridden in the subclass.
+    
     Every experiment class must have a compatible/matching datastructure class to save the experiment data.
     """
 
