@@ -60,7 +60,7 @@ resource_index = 0
 channel = 1
 
 # Attocube ANC300 (pyserial); slot-list maps position i -> channel i+1, "-" means empty slot.
-[attocube]
+[waveplates]
 cls = "anc300"
 port = "COM11"
 baudrate = 115200
