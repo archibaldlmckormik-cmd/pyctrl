@@ -30,6 +30,26 @@ validate_on_init = true
 cls = "wlm"
 IP_address = "131.152.109.117"
 port = 29957
+timeout_s = 5.0
+validate_on_init = true
+
+[wlm.ch1]
+laser_id = "velocity_2"
+PID_P = 0.1
+PID_I = 0.03
+PID_D = 0.05
+PID_ta = 0.005
+PID_sensitivity_factor = 1.0
+PID_polarity = -1.0
+
+[wlm.ch2]
+laser_id = "velocity_1"
+PID_P = 0.1
+PID_I = 0.03
+PID_D = 0.05
+PID_ta = 0.005
+PID_sensitivity_factor = 1.0
+PID_polarity = -1.0
 
 # Teledyne LeCroy oscilloscope (USBTMC via NI-VISA)
 [scope]
