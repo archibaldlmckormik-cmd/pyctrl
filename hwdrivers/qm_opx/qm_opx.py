@@ -12,6 +12,7 @@ from copy import deepcopy
 
 from qm import QuantumMachinesManager
 from qm import qua
+from qm.jobs.running_qm_job import RunningQmJob
 import qualang_tools as qtools
 from toolbox.software.path_config import get_qmconfigpath
 
@@ -113,10 +114,10 @@ class Opx:
     CLOCK_CYCLE_NS: int = 4
     MIN_PULSEWIDTH_NS: int = 16
 
-    @classmethod
     def __init__(self, IP_address: str, port: int = 80):
         self.qmm = QuantumMachinesManager(host=IP_address, port=port)
-        self._qm = None 
+        self._qm = None
+        self._running_job: RunningQmJob | None = None
 
     def open_quantum_machine(self, config: dict):
         """Open a QM with a given config dict, closing any previous one."""
@@ -139,7 +140,9 @@ class Opx:
         if self._qm is not None:
             self._qm.close()
         self.qmm.close()
-
+    
+    # Utility method to convert seconds to cycles
+    @classmethod
     def seconds_to_cycles(cls, seconds: float, name: str = "duration") -> int:
         """Convert a duration in seconds to an integer number of OPX clock cycles."""
         if seconds <= 0:
@@ -340,3 +343,95 @@ class Opx:
         except Exception as exc:
             logger.error("quasicw_counts: could not parse total_counts payload %r", payload)
             raise RuntimeError("Failed to parse total_counts from OPX result.") from exc
+
+    def turn_outputs_on(
+        self,
+        t_s: float = 100e-6,
+        AOMg1: float | None = None,
+        AOMr1: float | None = None,
+        AOMr2: float | None = None,
+        EOMr2: float | None = None,
+    ) -> None:
+        """
+        Turn on specified OPX outputs until :meth:`turn_outputs_off` is called.
+
+        Starts one ``infinite_loop_`` per active element (parallel on the OPX).
+        Each loop plays ``fire_cst`` at ``amp`` with pulse length ``t_s`` (cycles
+        from :meth:`seconds_to_cycles`). Stop with :meth:`turn_outputs_off` when
+        external measurements (NI-DAQ, powermeter, etc.) are finished.
+
+        If a previous CW job is still running, it is halted before starting a new one.
+
+        Parameters
+        ----------
+        t_s
+            Duration of each repeated play in seconds (default 100 µs).
+        AOMg1, AOMr1, AOMr2, EOMr2
+            Amplitude scaling for each element; omit (``None``) to leave off.
+        """
+        active_elements: dict[str, float] = {}
+        for name, value in {
+            "AOMg1": AOMg1,
+            "AOMr1": AOMr1,
+            "AOMr2": AOMr2,
+            "EOMr2": EOMr2,
+        }.items():
+            if value is None:
+                continue
+            active_elements[name] = float(value)
+
+        try:
+            _ = self.qm
+        except Exception as exc:
+            logger.error("turn_outputs_on: OPX quantum machine is not open: %s", exc)
+            raise RuntimeError("OPX quantum machine is not open.") from exc
+
+        if not active_elements:
+            logger.error("turn_outputs_on: no active optical element amplitude provided.")
+            raise ValueError("At least one element amplitude must be provided.")
+
+        if self._running_job is not None:
+            try:
+                self._running_job.halt()
+            except Exception as exc:
+                logger.warning("turn_outputs_on: halt previous job failed: %s", exc)
+            self._running_job = None
+
+        cycles_per_pulse = self.seconds_to_cycles(t_s, name="t_s")
+
+        with qua.program() as prog:
+            for elem_name, amp in active_elements.items():
+                with qua.infinite_loop_():
+                    qua.play(
+                        "fire_cst" * qua.amp(amp),
+                        elem_name,
+                        duration=cycles_per_pulse,
+                    )
+
+        self._running_job = self.execute(prog)
+
+    def turn_outputs_off(self) -> None:
+        """
+        Halt the quasi-CW job started by :meth:`turn_outputs_on`.
+
+        If no job is running, logs a warning and returns (safe to call from
+        ``finally`` after a failed ``turn_outputs_on`` or a second cleanup).
+
+        Raises
+        ------
+        RuntimeError
+            If halting the running job fails.
+        """
+        if self._running_job is None:
+            # if fail, warn
+            logger.warning("turn_outputs_off: no running OPX job to halt")
+            return
+        try:
+            self._running_job.halt()
+        except Exception as exc:
+            # if fail, log error and raise exception
+            logger.error("turn_outputs_off: failed to halt running OPX job: %s", exc)
+            raise RuntimeError("Failed to halt running OPX job.") from exc
+
+        self._running_job = None
+
