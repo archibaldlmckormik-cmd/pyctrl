@@ -13,30 +13,15 @@ import threading
 import warnings
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
-
 import numpy as np
-
-try:
-    import nidaqmx
-    from nidaqmx.constants import AcquisitionType, LineGrouping
-    from nidaqmx.constants import Edge
-except ModuleNotFoundError:  # pragma: no cover
-    nidaqmx = None  # type: ignore
-    AcquisitionType = None  # type: ignore
-    LineGrouping = None  # type: ignore
-    Edge = None  # type: ignore
+import nidaqmx
+from nidaqmx.constants import AcquisitionType, LineGrouping
+from nidaqmx.constants import Edge
 
 logger = logging.getLogger(__name__)
 
 # Allowed AI voltage span halves (±V), same set as MATLAB NIDAQclass.
 _RANGES_V: Tuple[float, ...] = (0.2, 1.0, 5.0, 10.0)
-
-
-def _require_nidaqmx() -> None:
-    if nidaqmx is None:
-        raise RuntimeError(
-            "nidaqmx is required. Install with `pip install nidaqmx` and ensure NI-DAQmx runtime is installed."
-        )
 
 
 @dataclass
@@ -64,7 +49,6 @@ class Nidaq:
     """
 
     def __init__(self, device: str = "Dev1") -> None:
-        _require_nidaqmx()
         self.device: str = str(device)
         self.samplesN: int = 1
         self._rate: float = 1000.0
@@ -284,8 +268,7 @@ class Nidaq:
                         self._bg_result = data
                     callback_handle(None, _BgSource(data=data))
                 except Exception as e:  # pragma: no cover
-                    warnings.warn(f"nidaq background acquisition failed: {e!r}")
-                    raise
+                    logger.warning(f"nidaq background acquisition failed: {e!r}")
 
             self._bg_result = None
             t = threading.Thread(target=_worker, daemon=True)
