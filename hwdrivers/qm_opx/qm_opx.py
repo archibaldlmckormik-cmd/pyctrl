@@ -90,9 +90,7 @@ class QMConfig:
             padding = spec['padding']
             I_samples = spec['I_samples']
             Q_samples = spec.get('Q_samples', [])
-
             samples = [I_samples, Q_samples] if Q_samples else I_samples
-
             with bakery.baking(self.config, padding_method = padding ,sampling_rate = sampling) as b:
                 b.add_op(name, element, samples)
                 b.play(name, element)
@@ -150,7 +148,7 @@ class Opx:
 
         if self._qm is not None:
             self._qm.close()
-        self.qmm.close()
+            self._qm = None
     
     # Utility method to convert seconds to cycles
     @classmethod
