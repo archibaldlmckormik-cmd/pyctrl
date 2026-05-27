@@ -13,7 +13,7 @@ from copy import deepcopy
 from qm import QuantumMachinesManager
 from qm import qua
 from qm.jobs.running_qm_job import RunningQmJob
-import qualang_tools as qtools
+import qualang_tools.bakery as bakery
 from toolbox.software.path_config import get_qmconfigpath
 
 logger = logging.getLogger(__name__)
@@ -93,7 +93,7 @@ class QMConfig:
 
             samples = [I_samples, Q_samples] if Q_samples else I_samples
 
-            with qtools.baking(self.config, sampling=sampling, padding=padding) as b:
+            with bakery.baking(self.config, sampling=sampling, padding=padding) as b:
                 b.add_op(name, element, samples)
                 b.play(name, element)
 
@@ -137,6 +137,17 @@ class Opx:
         return self.qm.execute(program)
 
     def close(self):
+        """
+        Closes the OPX quantum machine instance, halting any running job.
+        """
+        if self._running_job is not None:
+            try:
+                self._running_job.halt()
+            except Exception as exc:
+                logger.warning("close: failed to halt running OPX job: %s", exc)
+                raise RuntimeError("Failed to halt running OPX job.") from exc
+            self._running_job = None
+
         if self._qm is not None:
             self._qm.close()
         self.qmm.close()
