@@ -44,7 +44,7 @@ class QMConfig:
         path = get_qmconfigpath() if config_file is None else Path(config_file)
         raw_cfg = self.load_opx_config(path)
         self.config_from_file = self.dict_list_to_tuple(raw_cfg)
-        self.baked_from_file = self.config_from_file.pop("baked",{})
+        self.baked_from_file = self.config_from_file.pop("baked_pulses",{})
         self.config = deepcopy(self.config_from_file)
         self.baked = {}
         try:
