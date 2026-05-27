@@ -2,3 +2,4 @@
 .cursor/
 __pycache__/
 configs/*.local.toml
+*.local.yml
