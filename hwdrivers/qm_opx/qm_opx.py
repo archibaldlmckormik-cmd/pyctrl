@@ -93,7 +93,7 @@ class QMConfig:
 
             samples = [I_samples, Q_samples] if Q_samples else I_samples
 
-            with bakery.baking(self.config, sampling=sampling, padding=padding) as b:
+            with bakery.baking(self.config, padding_method = padding ,sampling_rate = sampling) as b:
                 b.add_op(name, element, samples)
                 b.play(name, element)
 
