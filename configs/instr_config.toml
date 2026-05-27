@@ -68,7 +68,7 @@ timeout_s = 60.0
 # Quantum Machines OPX+ (QuantumMachinesManager host/port)
 [opx]
 cls = "opx"
-IP_address = "192.168.1.203"
+IP_address = "192.168.0.103"
 port = 80
 
 # Thorlabs optical power meter (TLPMX .NET Interop), see PD100class.m
