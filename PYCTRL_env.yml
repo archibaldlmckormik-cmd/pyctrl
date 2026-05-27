@@ -1,4 +1,4 @@
-name: NV326
+name: pyctrl
 channels:
   - conda-forge
   - defaults
@@ -34,11 +34,11 @@ dependencies:
   - brotli-bin=1.2.0=hfd05255_1
   - brotli-python=1.2.0=py311hc5da9e4_1
   - bzip2=1.0.8=h0ad9c76_9
-  - ca-certificates=2026.4.22=h4c7d964_0
+  - ca-certificates=2026.5.14=haa95532_0
   - cached-property=1.5.2=hd8ed1ab_1
   - cached_property=1.5.2=pyha770c72_1
   - cairo=1.18.4=h477c42c_1
-  - certifi=2026.4.22=pyhd8ed1ab_0
+  - certifi=2026.5.20=py311haa95532_0
   - cffi=2.0.0=py311h3485c13_1
   - cftime=1.6.5=py311h17033d2_1
   - charset-normalizer=3.4.7=pyhd8ed1ab_0
@@ -218,6 +218,7 @@ dependencies:
   - pytest-timeout=2.4.0=py311haa95532_0
   - python=3.11.15=h0159041_0_cpython
   - python-dateutil=2.9.0.post0=pyhe01879c_2
+  - python-decouple=3.8=pyhff2d567_1
   - python-fastjsonschema=2.21.2=pyhe01879c_0
   - python-gil=3.11.15=hd8ed1ab_0
   - python-json-logger=3.2.1=pyh332efcf_0
@@ -315,4 +316,4 @@ dependencies:
       - scipy==1.17.1
       - tenacity==9.1.4
       - tinydb==4.8.2
-prefix: C:\Users\FONTAN0000\AppData\Local\anaconda3\envs\NV326
+prefix: C:\Users\FONTAN0000\AppData\Local\anaconda3\envs\pyctrl
