@@ -73,6 +73,9 @@ intermediate_frequency = 200e6 # in Hz
 fire_cst = "cstlaser_pulse"
 
 ## APD1
+[elements.APD1.singleInput] #useless??
+port = ["con1",1]
+
 [elements.APD1.outputs]
 out1 = ["con1",1]
 
@@ -90,6 +93,9 @@ derivativeThreshold = -1000
 derivativePolarity = "Above"
 
 ## APD2
+[elements.APD2.singleInput] #useless??
+port = ["con1",1]
+
 [elements.APD2.outputs]
 out1 = ["con1",2]
 
@@ -122,7 +128,7 @@ operation = "measurement"
 length = 16 # in ns
 
 [pulses.counter_pulse.waveforms]
-single = "apd_counter_wf"
+single = "zero_wf"
 
 
 # waveforms
@@ -130,7 +136,7 @@ single = "apd_counter_wf"
 type = "constant"
 sample = 0.001 # in V
 
-[waveforms.apd_counter_wf]
+[waveforms.zero_wf]
 type = "constant"
 sample = 0.0
 
