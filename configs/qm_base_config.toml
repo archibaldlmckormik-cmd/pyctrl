@@ -80,7 +80,7 @@ port = ["con1",1]
 out1 = ["con1",1]
 
 [elements.APD1]
-time_of_flight = 0.0
+time_of_flight = 4
 smearing = 0.0
 
 [elements.APD1.operations]
@@ -100,7 +100,7 @@ port = ["con1",1]
 out1 = ["con1",2]
 
 [elements.APD2]
-time_of_flight = 0.0
+time_of_flight = 4
 smearing = 0.0
 
 [elements.APD2.operations]
