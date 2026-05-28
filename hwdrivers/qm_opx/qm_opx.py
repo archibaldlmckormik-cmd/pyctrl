@@ -107,6 +107,19 @@ class Opx:
         Hostname or IP address of the OPX+ quantum machine.
     port: int
         Port number of the OPX+ quantum machine.
+    attibutes:
+    - qm: the quantum machine instance
+    - qmm: the quantum machines manager instance
+    - CLOCK_CYCLE_NS: the clock cycle in nanoseconds
+    - MIN_PULSEWIDTH_NS: the minimum pulse width in nanoseconds
+    methods:
+    - open_quantum_machine(config: dict): opens a QM with a given config dict, closing any previous one
+    - execute(program: qua.Program): compiles and runs a QUA program, returns the job
+    - close(): closes the OPX quantum machine instance, halting any running job
+    - seconds_to_cycles(seconds: float, name: str = "duration"): converts a duration in seconds to an integer number of OPX clock cycles
+    - quasicw_counts(t_s: float, *, AOMg1: float | None = None, AOMr1: float | None = None, AOMr2: float | None = None, EOMr2: float | None = None, apd: int | None = None, chunk_s: float = 0.01, max_tags: int = 8192): measures total APD counts in a quasi-CW fashion with chunked time-tagging windows
+    - turn_outputs_on(t_s: float = 100e-6, AOMg1: float | None = None, AOMr1: float | None = None, AOMr2: float | None = None, EOMr2: float | None = None): turns on specified OPX outputs until turn_outputs_off is called
+    - turn_outputs_off(): halts the quasi-CW job started by turn_outputs_on
     """
 
     CLOCK_CYCLE_NS: int = 4
@@ -116,6 +129,8 @@ class Opx:
         self.qmm = QuantumMachinesManager(host=IP_address, port=port)
         self._qm = None
         self._running_job: RunningQmJob | None = None
+        # instanciate with default config
+        self.open_quantum_machine(QMConfig().config)
 
     def open_quantum_machine(self, config: dict):
         """Open a QM with a given config dict, closing any previous one."""
