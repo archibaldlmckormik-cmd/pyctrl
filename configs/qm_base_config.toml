@@ -4,21 +4,30 @@
 # Basic configuration file read by the QMconfig module
 
 # controllers
-[controllers.con1.analog_outputs."1"]
+[controllers.con1]
+type = "opx1"
+
+[controllers.con1.analog_outputs.1]
 offset = 0.0
 delay = 0.0
 
-[controllers.con1.analog_outputs."2"]
+[controllers.con1.analog_outputs.2]
 offset = 0.0
 delay = 0.0
 
-[controllers.con1.analog_outputs."3"]
+[controllers.con1.analog_outputs.3]
 offset = 0.0
 delay = 0.0
 
-[controllers.con1.analog_outputs."4"]
+[controllers.con1.analog_outputs.4]
 offset = 0.0
 delay = 0.0
+
+[controllers.con1.analog_inputs.1]
+offset = 0.0
+
+[controllers.con1.analog_inputs.2]
+offset = 0.0
 
 # octaves
 
@@ -75,9 +84,10 @@ smearing = 0.0
 record_photons = "counter_pulse"
 
 [elements.APD1.timeTaggingParameters]
-signalThreshold = 0.0
+signalThreshold = -620
 signalPolarity = "Below"
-derivativeThreshold = 0.0
+derivativeThreshold = -1000
+derivativePolarity = "Above"
 
 ## APD2
 [elements.APD2.outputs]
@@ -91,9 +101,10 @@ smearing = 0.0
 record_photons = "counter_pulse"
 
 [elements.APD2.timeTaggingParameters]
-signalThreshold = 0.0
+signalThreshold = -620
 signalPolarity = "Below"
-derivativeThreshold = 0.0
+derivativeThreshold = -1000
+derivativePolarity = "Above"
 
 
 # pulses
@@ -101,7 +112,8 @@ derivativeThreshold = 0.0
 [pulses.cstlaser_pulse]
 operation = "control"
 length = 16 # in ns
-[pulses.cstlaser_pulse.waveform]
+
+[pulses.cstlaser_pulse.waveforms]
 single = "basic_cst"
 
 ## APD pulses
@@ -109,11 +121,18 @@ single = "basic_cst"
 operation = "measurement"
 length = 16 # in ns
 
+[pulses.counter_pulse.waveforms]
+single = "apd_counter_wf"
+
 
 # waveforms
 [waveforms.basic_cst]
 type = "constant"
-samples = 0.001 # in V
+sample = 0.001 # in V
+
+[waveforms.apd_counter_wf]
+type = "constant"
+sample = 0.0
 
 
 # digital_waveforms
@@ -138,4 +157,4 @@ I_samples = [3.35462628e-07, 7.31802419e-07, 1.53381068e-06, 3.08871541e-06, 5.9
 element = "EOMr2"
 sampling = 1e9
 padding = "right"
-I_samples = [0,1,0]
+I_samples = [0,0.001,0]
