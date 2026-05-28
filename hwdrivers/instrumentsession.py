@@ -93,6 +93,11 @@ class Session:
             config_path,
         )
 
+    @property
+    def available_instruments(self) -> list[str]:
+        """Names that can be passed to ``get()`` (from the loaded config, no drivers opened)."""
+        return list(self._config.keys())
+
     def get(self, name: str) -> Any:
         if name in self._instruments:
             return self._instruments[name]
