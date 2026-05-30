@@ -140,11 +140,7 @@ class ShutterSH05:
 
         from Thorlabs.MotionControl.KCube.SolenoidCLI import (  # type: ignore
             KCubeSolenoid,
-        )
-        from Thorlabs.MotionControl.KCube.SolenoidCLI import (  # type: ignore
             SolenoidStatus,
-        )
-        from Thorlabs.MotionControl.KCube.SolenoidCLI.ThorlabsKCubeSolenoidSettings import (  # type: ignore
             ThorlabsKCubeSolenoidSettings,
         )
 
