@@ -1,40 +1,47 @@
-# author: yannik fontana, creation date: 05.05.2026
-import os
+# author: yannik fontana, creation date: 30.05.2026
+"""Unit tests for ShutterSH05 lifecycle (no hardware)."""
+
+from __future__ import annotations
+
 import pathlib
 import sys
 import unittest
+from unittest.mock import MagicMock
 
-
-_REPO_ROOT = pathlib.Path(__file__).resolve().parents[3]
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
-
-try:
-    import clr  # type: ignore  # noqa: F401
-except ModuleNotFoundError:
-    clr = None
+_PROJECT_PARENT = pathlib.Path(__file__).resolve().parents[3]
+if str(_PROJECT_PARENT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_PARENT))
 
 from pyctrl.hwdrivers.shutterSH05.shutterSH05 import ShutterSH05  # noqa: E402
 
 
-_SERIAL = os.environ.get("SH05_SERIAL")
+class TestShutterSH05Close(unittest.TestCase):
+    def test_close_idempotent(self) -> None:
+        shutter = ShutterSH05.__new__(ShutterSH05)
+        device = MagicMock()
+        shutter._deviceNET = device
+        shutter._initialized = True
+        shutter.serialnumber = "68000001"
+        shutter.controllername = "KCube"
+        shutter.controllerdescription = "desc"
+        shutter.stagename = "SH05"
 
+        shutter.close()
+        shutter.close()
 
-@unittest.skipUnless(clr is not None and _SERIAL, "Set SH05_SERIAL and install pythonnet to run this test.")
-class TestShutterSH05(unittest.TestCase):
-    def test_connect_read_state_toggle_if_allowed(self) -> None:
-        allow_toggle = os.environ.get("SH05_TOGGLE", "").lower() in {"1", "true", "yes"}
-        with ShutterSH05(_SERIAL, validate_on_init=True) as sh:
-            self.assertTrue(sh.isconnected)
-            _ = sh.state
-            _ = sh.open
-            if allow_toggle:
-                sh.open = True
-                self.assertTrue(sh.open)
-                sh.open = False
-                self.assertFalse(sh.open)
+        device.StopPolling.assert_called_once()
+        device.DisableDevice.assert_called_once()
+        device.Disconnect.assert_called_once()
+        self.assertIsNone(shutter._deviceNET)
+        self.assertFalse(shutter._initialized)
+
+    def test_close_noop_when_never_connected(self) -> None:
+        shutter = ShutterSH05.__new__(ShutterSH05)
+        shutter._deviceNET = None
+        shutter._initialized = False
+        shutter.close()
+        self.assertIsNone(shutter._deviceNET)
 
 
 if __name__ == "__main__":
     unittest.main()
-

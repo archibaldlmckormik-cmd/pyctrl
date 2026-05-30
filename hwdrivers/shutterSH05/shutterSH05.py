@@ -88,7 +88,7 @@ class ShutterSH05:
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:
-        self.disconnect()
+        self.close()
 
     @classmethod
     def loaddlls(cls, *, kinesis_path: Optional[str] = None) -> None:
@@ -128,12 +128,29 @@ class ShutterSH05:
         return [str(s) for s in serial_numbers_net]
 
     # ---- Connection lifecycle ----
-    def connect(self, serialnumber: str, *, kinesis_path: Optional[str] = None) -> None:
+    def connect(
+        self,
+        serialnumber: Optional[str] = None,
+        *,
+        kinesis_path: Optional[str] = None,
+    ) -> None:
         """
         Connect to the shutter device and start polling.
+
+        Safe to call again on the same instance after :meth:`close`. If ``serialnumber``
+        is omitted, uses ``self.serialnumber`` from the last successful connection.
         """
         if self._initialized:
             raise RuntimeError("Device is already connected.")
+        if self._deviceNET is not None:
+            self.close()
+
+        if serialnumber is None:
+            serialnumber = self.serialnumber
+        if serialnumber is None:
+            raise ValueError(
+                "serialnumber is required when not previously connected on this instance."
+            )
 
         kinesis_path = kinesis_path or self._kinesis_path
         type(self).loaddlls(kinesis_path=kinesis_path)
@@ -144,55 +161,84 @@ class ShutterSH05:
             ThorlabsKCubeSolenoidSettings,
         )
 
-        prefix = int(str(serialnumber)[:2])
+        serial_str = str(serialnumber).strip()
+        try:
+            prefix = int(serial_str[:2])
+        except ValueError as exc:
+            raise RuntimeError(
+                f"Invalid Thorlabs K-Cube serial number {serialnumber!r}: expected a "
+                f"numeric serial (e.g. from ``listdevices()`` or ``instr_config``), not a "
+                f"placeholder."
+            ) from exc
         if prefix != int(KCubeSolenoid.DevicePrefix):
             raise RuntimeError("Thorlabs Shutter and K-Cube not recognised for this serial number.")
 
-        self._deviceNET = KCubeSolenoid.CreateKCubeSolenoid(serialnumber)
-        self._deviceNET.Connect(serialnumber)
-
-        if not self._deviceNET.IsSettingsInitialized():
-            self._deviceNET.WaitForSettingsInitialized(self._timeout_settings_ms)
-        if not self._deviceNET.IsSettingsInitialized():
-            raise RuntimeError(f"Unable to initialize device {serialnumber}")
-
-        self._deviceNET.StartPolling(int(self._TPOLLING_MS))
-        self._deviceNET.EnableDevice()
-
-        self.serialnumber = str(self._deviceNET.DeviceID)
-        shutter_settings = self._deviceNET.GetSolenoidConfiguration(serialnumber)
-        self.stagename = str(shutter_settings.DeviceSettingsName)
-
-        current_settings = ThorlabsKCubeSolenoidSettings.GetSettings(shutter_settings)
-        self.controllername = str(self._deviceNET.GetDeviceInfo().Name)
-        self.controllerdescription = str(self._deviceNET.GetDeviceInfo().Description)
-
-        # Store operating states enum values for open/close.
-        # Expected members are `Active`/`Inactive` and `OperatingStates`.
+        self._deviceNET = KCubeSolenoid.CreateKCubeSolenoid(serial_str)
         try:
-            op_states = SolenoidStatus.OperatingStates
-            self._OPSTATE_ACTIVE = op_states.Active
-            self._OPSTATE_INACTIVE = op_states.Inactive
-        except Exception as e:  # pragma: no cover
-            raise RuntimeError("Unable to resolve Solenoid operating state enums.") from e
+            self._deviceNET.Connect(serial_str)
 
-        self._initialized = True
-        logger.info("Shutter connected: %s", self.serialnumber)
+            if not self._deviceNET.IsSettingsInitialized():
+                self._deviceNET.WaitForSettingsInitialized(self._timeout_settings_ms)
+            if not self._deviceNET.IsSettingsInitialized():
+                raise RuntimeError(f"Unable to initialize device {serial_str}")
 
-    def disconnect(self) -> None:
+            self._deviceNET.StartPolling(int(self._TPOLLING_MS))
+            self._deviceNET.EnableDevice()
+
+            self.serialnumber = str(self._deviceNET.DeviceID)
+            shutter_settings = self._deviceNET.GetSolenoidConfiguration(serial_str)
+            self.stagename = str(shutter_settings.DeviceSettingsName)
+
+            ThorlabsKCubeSolenoidSettings.GetSettings(shutter_settings)
+            self.controllername = str(self._deviceNET.GetDeviceInfo().Name)
+            self.controllerdescription = str(self._deviceNET.GetDeviceInfo().Description)
+
+            # Store operating states enum values for open/close.
+            # Expected members are `Active`/`Inactive` and `OperatingStates`.
+            try:
+                op_states = SolenoidStatus.OperatingStates
+                self._OPSTATE_ACTIVE = op_states.Active
+                self._OPSTATE_INACTIVE = op_states.Inactive
+            except Exception as e:  # pragma: no cover
+                raise RuntimeError("Unable to resolve Solenoid operating state enums.") from e
+
+            self._initialized = True
+            logger.info("Shutter connected: %s", self.serialnumber)
+        except Exception:
+            self.close()
+            raise
+
+    def close(self) -> None:
         """
-        Disconnect the device and stop polling.
-        """
-        if not self.isconnected:
-            raise RuntimeError("Device not connected.")
+        Release the Kinesis device connection (stop polling, disable, disconnect).
 
+        Idempotent: safe to call multiple times and when never connected. Does not unload
+        Kinesis DLLs (they remain loaded for the process). To close the shutter blade,
+        use ``shutter.open = False`` before calling this.
+
+        Kinesis assemblies loaded via :meth:`loaddlls` stay in memory for the process;
+        only this device's .NET handle is released.
+        """
+        if self._deviceNET is None:
+            return
+        device = self._deviceNET
         try:
-            self._deviceNET.StopPolling()
-            self._deviceNET.DisableDevice()
-            self._deviceNET.Disconnect()
+            device.StopPolling()
+            device.DisableDevice()
+            device.Disconnect()
+        except Exception:
+            logger.warning("ShutterSH05 close: error during device teardown", exc_info=True)
         finally:
-            self._deviceNET = None
-            self._initialized = False
+            self._clear_connection_state()
+
+    def _clear_connection_state(self) -> None:
+        self._deviceNET = None
+        self._initialized = False
+        self.controllername = None
+        self.controllerdescription = None
+        self.stagename = None
+        # Keep self.serialnumber so reconnect via connect() can omit the argument when
+        # the same device is intended (caller may still pass an explicit serial).
 
     def reset(self, serialnumber: str) -> None:
         """
@@ -313,8 +359,7 @@ class ShutterSH05:
 
     def __del__(self) -> None:  # pragma: no cover
         try:
-            if getattr(self, "_deviceNET", None) is not None:
-                self.disconnect()
+            self.close()
         except Exception:
             pass
 
