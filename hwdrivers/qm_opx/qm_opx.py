@@ -14,7 +14,7 @@ from qm import QuantumMachinesManager
 from qm import qua
 from qm.jobs.running_qm_job import RunningQmJob
 import qualang_tools.bakery as bakery
-from toolbox.software.path_config import get_qmconfigpath
+from pyctrl.toolbox.software.path_config import get_qmconfigpath
 
 logger = logging.getLogger(__name__)
 
@@ -136,6 +136,7 @@ class Opx:
         """Open a QM with a given config dict, closing any previous one."""
         if self._qm is not None:
             self._qm.close()
+        
         self._qm = self.qmm.open_qm(config)
         return self._qm
 

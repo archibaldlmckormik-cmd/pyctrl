@@ -22,7 +22,7 @@ import logging
 from pathlib import Path
 from typing import Any, Sequence
 
-from toolbox.software.path_config import get_labjournalpath
+from pyctrl.toolbox.software.path_config import get_labjournalpath
 
 logger = logging.getLogger(__name__)
 TITLE_LEFT_CM = 0.8

@@ -15,13 +15,12 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 
-from experiments.generic_exp import GenericExp
-from toolbox.hardware.oneway_relock import oneway_relock_mass
-from toolbox.software.datamanagement import datastructures as ds
-from hwdrivers.instrumentsession import Session
+from pyctrl.experiments.generic_exp import GenericExp
+from pyctrl.toolbox.hardware.oneway_relock import oneway_relock_mass
+from pyctrl.toolbox.software.datamanagement import datastructures as ds
+from pyctrl.hwdrivers.instrumentsession import Session
 
 logger = logging.getLogger(__name__)
-
 
 class AOMCalib(GenericExp):
     """
@@ -36,6 +35,9 @@ class AOMCalib(GenericExp):
     aom = AOMr2, laser_id = velocity1
     """
 
+    AOM_PULSE_S = 100e-6
+    AOM_RANGE = (0, 1000,101)
+    
     def __init__(self, session: Session, aom: str = "AOMg1", laser_id: str = "green_532"):
         self.session = session
         self.setup(aom=aom, laser_id=laser_id)
@@ -51,8 +53,9 @@ class AOMCalib(GenericExp):
         else:
             if laser_id != lookup_laser[aom]:
                 logger.warning(f"AOMCalib: laser_id {laser_id} not matchig standard pattern {lookup_laser[aom]}")
-
-        self.data.pulses[aom] = ds.PulseItem(laser_id=laser_id, aom_amplitude=np.linspace(0, 0.5, 100), envelope="rectangular")
+        # create the pulse item for the aom
+        #
+        self.data.pulses[aom] = ds.PulseItem(laser_id=laser_id, aom_amplitude=np.linspace(*AOM_RANGE), duration=AOM_PULSE_S, envelope="rectangular")
 
         # load the instruments
         self.opx = self.session.get("opx")
@@ -61,6 +64,9 @@ class AOMCalib(GenericExp):
             self.shutter = self.session.get("shutter")
         self.pd100 = self.session.get("pd100")
         self.nidaq = self.session.get("nidaq")
+        # add the two AI channels to the nidaq
+        self.nidaq.add_ai(["ai0", "ai1"])
+
         self.result_figs: list[Any] = []
 
     def pre_run(self) -> None:
@@ -72,8 +78,13 @@ class AOMCalib(GenericExp):
         self.data.timestamp = datetime.now()
 
     def run(self) -> None:
-        """Run the calibration of the passed aom."""
+        """
+        Run the calibration of the aom.
+        
+        """
         self.pre_run()
+        aom_name = next(iter(self.data.pulses.pulses))
+        aom = self.data.pulses[aom_name]
 
        
 

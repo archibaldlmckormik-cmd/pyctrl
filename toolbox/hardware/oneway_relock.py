@@ -11,7 +11,7 @@ from typing import Any
 import numpy as np
 from scipy.optimize import curve_fit
 
-from toolbox.software.common_mathfuns import lorentzian
+from pyctrl.toolbox.software.common_mathfuns import lorentzian
 
 logger = logging.getLogger(__name__)
 

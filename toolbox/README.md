@@ -27,9 +27,9 @@ Rule of thumb: **pure Python / files / numpy → `software/`; needs a live instr
 Import the piece you need; nothing here requires a `Session` unless it lives in `hardware/`:
 
 ```python
-from toolbox.software import common_mathfuns as cmf      # math: gaussian, lorentzian, addnoise...
-from toolbox.software.datamanagement import datastructures as ds  # *Data classes (save/load)
-from toolbox.software.path_config import get_datapath     # resolved lab paths
+from pyctrl.toolbox.software import common_mathfuns as cmf      # math: gaussian, lorentzian, addnoise...
+from pyctrl.toolbox.software.datamanagement import datastructures as ds  # *Data classes (save/load)
+from pyctrl.toolbox.software.path_config import get_datapath     # resolved lab paths
 ```
 
 For what each side offers and how to extend it, follow the subpackage READMEs above.

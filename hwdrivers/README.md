@@ -27,7 +27,7 @@ experiment  ──>  Session.get("opx")  ──>  Opx driver  ──>  hardware
 Always go through a `Session`, if possible inside a `with` block so every opened driver is closed cleanly:
 
 ```python
-from hwdrivers import Session
+from pyctrl.hwdrivers import Session   # or: import pyctrl; pyctrl.Session()
 
 with Session() as session:
     print(session.available_instruments)   # names you can pass to get(), nothing opened yet

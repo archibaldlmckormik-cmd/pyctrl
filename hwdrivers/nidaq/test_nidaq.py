@@ -11,16 +11,18 @@ import sys
 import unittest
 
 
-_REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
+# Allow running this file directly without `pip install -e .`: put the folder
+# that *contains* the `pyctrl` package (the repo's parent) on sys.path.
+_PROJECT_PARENT = pathlib.Path(__file__).resolve().parents[3]
+if str(_PROJECT_PARENT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_PARENT))
 
 try:
     import nidaqmx  # noqa: F401
 except ModuleNotFoundError:
     nidaqmx = None
 
-from hwdrivers.nidaq.nidaq import Nidaq
+from pyctrl.hwdrivers.nidaq.nidaq import Nidaq  # noqa: E402
 
 
 _DEVICE = os.environ.get("NIDAQ_DEVICE")

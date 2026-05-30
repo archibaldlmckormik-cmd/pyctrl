@@ -26,8 +26,8 @@ without each experiment re-implementing the multi-instrument choreography.
 Pass in already-opened drivers from a `Session`; the routine drives them and returns results:
 
 ```python
-from hwdrivers import Session
-from toolbox.hardware.oneway_relock import oneway_relock
+from pyctrl.hwdrivers import Session
+from pyctrl.toolbox.hardware.oneway_relock import oneway_relock
 
 with Session() as session:
     opx = session.get("opx")        # OPX must have an open QM

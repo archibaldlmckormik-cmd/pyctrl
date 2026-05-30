@@ -316,4 +316,8 @@ dependencies:
       - scipy==1.17.1
       - tenacity==9.1.4
       - tinydb==4.8.2
+      # PyCtrl itself, installed editable. Run `conda env create -f PYCTRL_env.yml`
+      # from the repo root (the folder containing pyproject.toml) so `.` resolves
+      # to this package. Editable => source edits are picked up with no re-install.
+      - -e .
 prefix: C:\Users\FONTAN0000\AppData\Local\anaconda3\envs\pyctrl

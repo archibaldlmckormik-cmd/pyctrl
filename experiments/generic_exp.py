@@ -11,8 +11,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from hwdrivers.instrumentsession import Session
-from toolbox.software.save_to_html import save_to_html
+from pyctrl.hwdrivers.instrumentsession import Session
+from pyctrl.toolbox.software.save_to_html import save_to_html
 
 logger = logging.getLogger(__name__)
 

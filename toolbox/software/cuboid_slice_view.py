@@ -44,7 +44,7 @@ def cuboid_slice_view(volume: np.ndarray, axis: int) -> go.Figure:
     Example
     -------
     >>> import numpy as np
-    >>> from toolbox.software.cuboid_slice_view import cuboid_slice_view
+    >>> from pyctrl.toolbox.software.cuboid_slice_view import cuboid_slice_view
     >>> vol = np.random.rand(4, 5, 6)
     >>> fig = cuboid_slice_view(vol, axis=2)  # slide along z, view x–y planes
     >>> fig.show()

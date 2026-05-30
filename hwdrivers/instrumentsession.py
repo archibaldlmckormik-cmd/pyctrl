@@ -13,17 +13,17 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from hwdrivers.attocube.anc300 import Anc300
-from hwdrivers.baspidac.dac import Dac
-from hwdrivers.highfinesse.wlm import Wlm
-from hwdrivers.lecroy.lecroy import Scope
-from hwdrivers.nidaq.nidaq import Nidaq
-from hwdrivers.powermeter.pd100 import Pd100
-from hwdrivers.qm_opx.qm_opx import Opx
-from hwdrivers.shutterSH05.shutterSH05 import ShutterSH05
-from hwdrivers.spectrometer.princeton import SpecRemote
-from hwdrivers.timetagger.picoharp300 import Pharp
-from toolbox.software.path_config import _resolve_config_path
+from pyctrl.hwdrivers.attocube.anc300 import Anc300
+from pyctrl.hwdrivers.baspidac.dac import Dac
+from pyctrl.hwdrivers.highfinesse.wlm import Wlm
+from pyctrl.hwdrivers.lecroy.lecroy import Scope
+from pyctrl.hwdrivers.nidaq.nidaq import Nidaq
+from pyctrl.hwdrivers.powermeter.pd100 import Pd100
+from pyctrl.hwdrivers.qm_opx.qm_opx import Opx
+from pyctrl.hwdrivers.shutterSH05.shutterSH05 import ShutterSH05
+from pyctrl.hwdrivers.spectrometer.princeton import SpecRemote
+from pyctrl.hwdrivers.timetagger.picoharp300 import Pharp
+from pyctrl.toolbox.software.path_config import _resolve_config_path
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +47,8 @@ class Session:
     with Session() as session:
         # open you instrument here
         your_instrument = session.get("your_instrument")
+        # to see all available instruments:
+    print(session.available_instruments)
     # the instrument will be closed automatically
     """
 

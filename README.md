@@ -15,12 +15,17 @@ scripts under `NVAFM/Useful scripts/`.
 
 ## Layout
 
+The repository folder itself **is** the importable package `pyctrl`:
+
 ```text
-configs/        TOML configs (committed templates + per-machine *.local.toml)
-hwdrivers/      One subpackage per instrument + Session (instrument pool)
-experiments/   GenericExp + concrete experiments (nonresonant/, calibration/)
-toolbox/        software/ (data, plotting, IO) and hardware/ (relock, etc.)
-PYCTRL_env.yml  Conda env spec (name: NV326)
+pyctrl/             <- this folder == the `pyctrl` package (git root)
+  __init__.py       Package entry point (exposes Session, __version__)
+  pyproject.toml    Makes the repo installable as `pyctrl` (editable dev install)
+  configs/          TOML configs (committed templates + per-machine *.local.toml)
+  hwdrivers/        One subpackage per instrument + Session (instrument pool)
+  experiments/      GenericExp + concrete experiments (nonresonant/, calibration/)
+  toolbox/          software/ (data, plotting, IO) and hardware/ (relock, etc.)
+  PYCTRL_env.yml    Conda env spec (env name: pyctrl)
 ```
 
 ## How to use
@@ -29,8 +34,23 @@ PYCTRL_env.yml  Conda env spec (name: NV326)
 
 ```powershell
 conda env create -f PYCTRL_env.yml
-conda activate NV326
+conda activate pyctrl
 ```
+
+This also installs PyCtrl itself in **editable mode** (see the `pip:` section of
+`PYCTRL_env.yml`), so `import pyctrl` works from any directory and from notebooks.
+If you build the environment some other way, or `import pyctrl` fails, run the
+editable install once from this folder (the one containing `pyproject.toml`):
+
+```powershell
+pip install -e .
+```
+
+Editable means your edits are picked up immediately — there is **nothing to
+re-install while developing**, even though the package is "installed". Adding a
+new sub-package (a folder with `__init__.py`) under `hwdrivers/`, `toolbox/`,
+etc. just works as `pyctrl.<...>`; no `pyproject.toml` change is needed for
+day-to-day development.
 
 ### 2. Create machine-local configs
 
@@ -45,15 +65,20 @@ Always open hardware through a `Session` and use a `with` block so drivers
 are closed cleanly:
 
 ```python
-from hwdrivers import Session
-from experiments.nonresonant.scanhwp_z import ScanHWP_Z
+import pyctrl
+from pyctrl.experiments.nonresonant.scanhwp_z import ScanHWP_Z
 
-with Session() as session:
+with pyctrl.Session() as session:
     exp = ScanHWP_Z(session)
     exp.run()
     exp.plot_and_log()   # writes the lab journal HTML
     exp.save()           # writes HDF5
 ```
+
+All internal modules are imported with the `pyctrl.` prefix
+(`from pyctrl.toolbox.software import common_mathfuns`,
+`from pyctrl.hwdrivers.instrumentsession import Session`, …). `pyctrl.Session`
+is a convenience re-export of `pyctrl.hwdrivers.Session`.
 
 Inside an experiment, grab instruments via `self.session.get("<name>")`
 (name matches the TOML table, e.g. `"wlm"`, `"dac"`, `"opx"`). The same

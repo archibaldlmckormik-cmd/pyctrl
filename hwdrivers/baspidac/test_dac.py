@@ -6,12 +6,13 @@ import sys
 import unittest
 
 
-# Allow running from within the `pyctrl/...` tree without install.
-_REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
+# Allow running this file directly without `pip install -e .`: put the folder
+# that *contains* the `pyctrl` package (the repo's parent) on sys.path.
+_PROJECT_PARENT = pathlib.Path(__file__).resolve().parents[3]
+if str(_PROJECT_PARENT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_PARENT))
 
-from hwdrivers.baspidac.dac import Dac  # noqa: E402
+from pyctrl.hwdrivers.baspidac.dac import Dac  # noqa: E402
 
 
 logging.basicConfig(level=logging.INFO)

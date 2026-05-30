@@ -16,9 +16,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from experiments.generic_exp import GenericExp
-from toolbox.hardware.oneway_relock import oneway_relock_mass
-from toolbox.software.datamanagement import datastructures as ds
+from pyctrl.experiments.generic_exp import GenericExp
+from pyctrl.toolbox.hardware.oneway_relock import oneway_relock_mass
+from pyctrl.toolbox.software.datamanagement import datastructures as ds
 
 logger = logging.getLogger(__name__)
 

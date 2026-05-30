@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyctrl"
+version = "0.1.0"
+description = "Python control stack for the NV/cavity setup (instrument drivers, experiments, toolbox)."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Yannik Fontana" }]
+
+# Runtime dependencies are intentionally left empty: the environment is
+# defined and pinned by PYCTRL_env.yml (conda). This file only declares how to
+# make the repo importable as the `pyctrl` package; it does not duplicate or
+# re-pin those dependencies.
+dependencies = []
+
+# The repository root *is* the importable package `pyctrl`, so we map the
+# package name onto "." instead of moving every subfolder into a nested
+# pyctrl/ directory. Sub-packages (hwdrivers, toolbox, experiments, ...) resolve
+# automatically as `pyctrl.<name>` once `pyctrl` points at this directory.
+[tool.setuptools]
+packages = ["pyctrl"]
+package-dir = { "pyctrl" = "." }

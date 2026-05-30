@@ -23,7 +23,7 @@ analysis on any machine).
 **Data classes — produce, save, reload (no hardware needed):**
 
 ```python
-from toolbox.software.datamanagement import datastructures as ds
+from pyctrl.toolbox.software.datamanagement import datastructures as ds
 
 data = ds.ScanXY_ZData()          # picks its own dated HDF5 filename on creation
 data.signals["counts"] = counts   # fill arrays + metadata
@@ -39,7 +39,7 @@ it works purely from the stored tree.
 **Math:**
 
 ```python
-from toolbox.software import common_mathfuns as cmf
+from pyctrl.toolbox.software import common_mathfuns as cmf
 z = cmf.gaussian2d(x, y, center=(6, 4), fwhm=(2, 1), angle=np.pi/3)  # 2D surface
 noisy = cmf.addnoise(z, std_dev=0.1)                                  # additive Gaussian noise
 ```
@@ -47,7 +47,7 @@ noisy = cmf.addnoise(z, std_dev=0.1)                                  # additive
 **Reporting** (usually called for you by `GenericExp.plot_and_log`):
 
 ```python
-from toolbox.software.save_to_html import save_to_html
+from pyctrl.toolbox.software.save_to_html import save_to_html
 save_to_html(data, figures)   # appends one section to today's lab-journal HTML, returns its path
 ```
 

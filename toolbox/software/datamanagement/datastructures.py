@@ -13,7 +13,7 @@ import numpy as np
 import h5py
 import datetime
 import os
-from toolbox.software.path_config import get_datapath
+from pyctrl.toolbox.software.path_config import get_datapath
 from .dataparsing import DEFAULT_MAX_DEPTH, read_instance_from_h5, write_instance_to_h5
 
 logger = logging.getLogger(__name__)

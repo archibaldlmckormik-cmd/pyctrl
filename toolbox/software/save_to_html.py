@@ -26,7 +26,7 @@ from typing import Any, Sequence
 import plotly.io as pio
 from plotly.graph_objects import Figure as GoFigure
 
-from toolbox.software.save_to_pptx import _slide_title_line, _tag_text, labjournal_pptx_path
+from pyctrl.toolbox.software.save_to_pptx import _slide_title_line, _tag_text, labjournal_pptx_path
 
 logger = logging.getLogger(__name__)
 
