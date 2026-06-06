@@ -23,3 +23,8 @@ dependencies = []
 [tool.setuptools]
 packages = ["pyctrl"]
 package-dir = { "pyctrl" = "." }
+
+# pyright configuration
+[tool.pyright]
+extraPaths = [".."]
+pythonVersion = "3.11"
