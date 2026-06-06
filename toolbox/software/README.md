@@ -17,7 +17,7 @@ analysis on any machine).
 | `save_to_pptx.py` | Append the same figures to the **daily lab-journal PowerPoint** (static PNGs). |
 | `loadopxconfig.py` | `load_opx_config()` → the QM/OPX TOML as a nested dict (lists→tuples). |
 | `path_config.py` | Resolve lab paths from `configs/path_config(.local).toml`: `get_datapath`, `get_labjournalpath`, `get_logspath`, `get_qmconfigpath`. |
-| `logging_config.py` | `setup_logging()` — configure the `pyctrl` logger (daily file under `logspath`, console). Not called on import. |
+| `logging_config.py` | `setup_logging()` / `shutdown_logging()` — configure or tear down the `pyctrl` logger (daily file under `logspath`, console). Not called on import. |
 
 ## Use it
 
@@ -56,7 +56,8 @@ save_to_html(data, figures)   # appends one section to today's lab-journal HTML,
 
 ```python
 import pyctrl
-pyctrl.setup_logging()   # or: from pyctrl.toolbox.software.logging_config import setup_logging
+pyctrl.setup_logging()      # or: from pyctrl.toolbox.software.logging_config import setup_logging
+pyctrl.shutdown_logging()   # close handlers / log file when done
 ```
 
 ## Notes

@@ -83,7 +83,13 @@ pyctrl.setup_logging(
 )
 ```
 
-Disable with `PYCTRL_LOG=0` or `setup_logging(enabled=False)`.
+Disable setup with `PYCTRL_LOG=0` or `setup_logging(enabled=False)`.
+
+Tear down handlers and close the log file (e.g. end of notebook session):
+
+```python
+pyctrl.shutdown_logging()
+```
 
 ### 4. Run an experiment
 

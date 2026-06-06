@@ -93,6 +93,41 @@ class _DailyFileHandler(Handler):
         super().close()
 
 
+def _clear_pyctrl_handlers() -> int:
+    """Remove and close all handlers on the ``pyctrl`` logger. Returns count removed."""
+    logger = logging.getLogger("pyctrl")
+    handlers = list(logger.handlers)
+    for handler in handlers:
+        logger.removeHandler(handler)
+        try:
+            handler.close()
+        except Exception:
+            pass
+    return len(handlers)
+
+
+def shutdown_logging(*, reset_noisy_loggers: bool = False) -> None:
+    """
+    Tear down handlers attached by :func:`setup_logging`.
+
+    Idempotent: safe when logging was never configured. Closes the daily log file
+    handle. Does not unload the ``pyctrl`` package; restart the kernel for a full reset.
+
+    Parameters
+    ----------
+    reset_noisy_loggers
+        If ``True``, reset ``qm``, ``urllib3``, ``grpc``, and ``matplotlib`` loggers to
+        ``NOTSET``. Default ``False`` leaves them at WARNING as set by ``setup_logging``.
+    """
+    _clear_pyctrl_handlers()
+    logger = logging.getLogger("pyctrl")
+    logger.setLevel(logging.NOTSET)
+    logger.propagate = True
+    if reset_noisy_loggers:
+        for name in _NOISY_LOGGERS:
+            logging.getLogger(name).setLevel(logging.NOTSET)
+
+
 def setup_logging(
     *,
     log_level: LevelType = "INFO",
@@ -140,12 +175,7 @@ def setup_logging(
     pyctrl_logger.setLevel(_resolve_level(log_level))
     pyctrl_logger.propagate = False
 
-    for handler in list(pyctrl_logger.handlers):
-        pyctrl_logger.removeHandler(handler)
-        try:
-            handler.close()
-        except Exception:
-            pass
+    _clear_pyctrl_handlers()
 
     formatter = logging.Formatter(_FMT, datefmt=_DATE_FMT)
     log_file_path: Path | None = None

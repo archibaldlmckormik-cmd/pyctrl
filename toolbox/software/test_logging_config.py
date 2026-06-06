@@ -17,6 +17,7 @@ if str(_PROJECT_PARENT) not in sys.path:
 from pyctrl.toolbox.software.logging_config import (  # noqa: E402
     _DailyFileHandler,
     setup_logging,
+    shutdown_logging,
 )
 
 
@@ -44,16 +45,9 @@ class TestDailyFileHandler(unittest.TestCase):
             self.assertIn("hello", expected.read_text(encoding="utf-8"))
 
 
-def _clear_pyctrl_handlers() -> None:
-    logger = logging.getLogger("pyctrl")
-    for h in list(logger.handlers):
-        logger.removeHandler(h)
-        h.close()
-
-
 class TestSetupLogging(unittest.TestCase):
     def tearDown(self) -> None:
-        _clear_pyctrl_handlers()
+        shutdown_logging()
 
     def test_replace_handlers_on_second_call(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -62,11 +56,28 @@ class TestSetupLogging(unittest.TestCase):
             self.assertEqual(len(logger.handlers), 1)
             setup_logging(log_dir=tmpdir, log_to_console=False)
             self.assertEqual(len(logger.handlers), 1)
-            _clear_pyctrl_handlers()
+            shutdown_logging()
 
     def test_disabled_via_enabled(self) -> None:
         setup_logging(enabled=False)
         self.assertEqual(len(logging.getLogger("pyctrl").handlers), 0)
+
+    def test_shutdown_removes_handlers(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            setup_logging(log_dir=tmpdir, log_to_console=False)
+            logger = logging.getLogger("pyctrl")
+            self.assertEqual(len(logger.handlers), 1)
+            shutdown_logging()
+            self.assertEqual(len(logger.handlers), 0)
+            self.assertEqual(logger.level, logging.NOTSET)
+            self.assertTrue(logger.propagate)
+            shutdown_logging()
+
+    def test_shutdown_resets_noisy_loggers_when_requested(self) -> None:
+        setup_logging(log_to_file=False, log_to_console=False)
+        logging.getLogger("qm").setLevel(logging.WARNING)
+        shutdown_logging(reset_noisy_loggers=True)
+        self.assertEqual(logging.getLogger("qm").level, logging.NOTSET)
 
 
 if __name__ == "__main__":
