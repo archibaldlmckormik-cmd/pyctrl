@@ -125,7 +125,7 @@ class IterationItem:
     Defines the parameters of a single iteration item.
     """
     description: str = ""
-    values: np.ndarray | list[float] | None = None
+    values: np.ndarray | list[float] | int | float | None = None
 
 # GENERIC EXPERIMENTAL DATA
 # definition of the data class "template" (a parent class for all experimental data classes)
