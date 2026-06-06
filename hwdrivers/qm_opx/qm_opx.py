@@ -130,7 +130,8 @@ class Opx:
         self._qm = None
         self._running_job: RunningQmJob | None = None
         # instanciate with default config
-        self.open_quantum_machine(QMConfig().config)
+        self._active_config = QMConfig().config
+        self.open_quantum_machine(config = self._active_config)
 
     def open_quantum_machine(self, config: dict):
         """Open a QM with a given config dict, closing any previous one."""
