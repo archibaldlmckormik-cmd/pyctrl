@@ -8,5 +8,6 @@ __author__ = "yannik fontana"
 # experiment modules are bypassed!
 from .nonresonant.scanhwp_z import ScanHWP_Z
 from .nonresonant.scanxy_z import ScanXY_Z
+from .calibration.aom_calib import AOMCalib
 
-__all__ = ["ScanXY_Z", "ScanHWP_Z"]
+__all__ = ["ScanXY_Z", "ScanHWP_Z", "AOMCalib"]
