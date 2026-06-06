@@ -9,6 +9,8 @@ Everything else lives in clearly named sub-packages that you import directly:
     from pyctrl.experiments.nonresonant.scanhwp_z import ScanHWP_Z
     from pyctrl.toolbox.software import common_mathfuns
 
+    pyctrl.setup_logging()   # optional; once per kernel — see README
+
     with pyctrl.Session() as session:
         ...
 
@@ -23,5 +25,6 @@ __author__ = "yannik fontana"
 __version__ = "0.1.0"
 
 from pyctrl.hwdrivers import Session
+from pyctrl.toolbox.software.logging_config import setup_logging
 
-__all__ = ["Session", "__version__"]
+__all__ = ["Session", "setup_logging", "__version__"]

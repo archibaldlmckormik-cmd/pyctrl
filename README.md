@@ -57,9 +57,35 @@ day-to-day development.
 Copy `configs/path_config.toml` → `configs/path_config.local.toml` and
 `configs/instr_config.toml` → `configs/instr_config.local.toml`, then edit
 the local copies (paths, COM ports, IPs). See `configs/README.md` for
-details — the local files are gitignored.
+details — the local files are gitignored. Include **`logspath`** (folder for
+PyCtrl log files) in `path_config.local.toml`.
 
-### 3. Run an experiment
+### 3. Logging (notebooks and scripts)
+
+`import pyctrl` does **not** turn logging on. Call once per kernel (first cell
+is fine; re-running the cell replaces handlers safely):
+
+```python
+import pyctrl
+
+pyctrl.setup_logging()  # INFO → daily file; WARNING+ → console
+```
+
+Log files: `{logspath}/pyctrl_YYYY-MM-DD.log` (date from each message’s time, so
+long sessions roll over at midnight). Override levels or directory:
+
+```python
+pyctrl.setup_logging(
+    log_level="DEBUG",
+    log_level_file="DEBUG",
+    log_level_console="ERROR",
+    log_dir=r"D:/tmp/pyctrl_logs",
+)
+```
+
+Disable with `PYCTRL_LOG=0` or `setup_logging(enabled=False)`.
+
+### 4. Run an experiment
 
 Always open hardware through a `Session` and use a `with` block so drivers
 are closed cleanly:
@@ -85,7 +111,7 @@ Inside an experiment, grab instruments via `self.session.get("<name>")`
 session returns the **same** driver instance on every call — never
 instantiate drivers directly.
 
-### 4. Reload saved data
+### 5. Reload saved data
 
 Every `*Data` class in `toolbox/software/datamanagement/datastructures.py`
 has a matching `.load()` classmethod for replotting or analysis without

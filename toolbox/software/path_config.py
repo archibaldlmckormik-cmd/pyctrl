@@ -52,8 +52,8 @@ def load_path_config() -> dict[str, str]:
     """
     Parse the resolved path config TOML.
 
-    Re-reads from disk when the file's mtime changes. Requires ``datapath`` and
-    ``labjournalpath`` (string paths).
+    Re-reads from disk when the file's mtime changes. Requires ``datapath``,
+    ``labjournalpath``, and ``logspath`` (string paths).
     """
     global _config_cache, _config_mtime
 
@@ -77,7 +77,7 @@ def load_path_config() -> dict[str, str]:
             )
         out[key] = value
 
-    for required in ("datapath", "labjournalpath"):
+    for required in ("datapath", "labjournalpath", "logspath"):
         if required not in out:
             raise KeyError(
                 f"{path.name} must define {required!r}; "
@@ -97,6 +97,11 @@ def get_datapath() -> str:
 def get_labjournalpath() -> str:
     """Root directory for lab journal files (``labjournalpath`` in path config)."""
     return load_path_config()["labjournalpath"]
+
+
+def get_logspath() -> str:
+    """Root directory for PyCtrl log files (``logspath`` in path config)."""
+    return load_path_config()["logspath"]
 
 
 def get_qmconfigpath() -> str:

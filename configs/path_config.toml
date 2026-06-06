@@ -11,5 +11,8 @@ datapath = "C:/pyctrl_data"
 # the path toward the root for all experiment data
 labjournalpath = "C:/pyctrl_labjournal"
 
+# the path toward the log files
+logspath = "C:/pyctrl_logs"
+
 # the path toward the quantum machine configuration file
 qmconfigpath = "C:/pyctrl/configs/qm_base_config.toml"

@@ -16,7 +16,8 @@ analysis on any machine).
 | `save_to_html.py` | Append a measurement block (heading, tag, interactive plots) to the **daily lab-journal HTML**. |
 | `save_to_pptx.py` | Append the same figures to the **daily lab-journal PowerPoint** (static PNGs). |
 | `loadopxconfig.py` | `load_opx_config()` → the QM/OPX TOML as a nested dict (lists→tuples). |
-| `path_config.py` | Resolve lab paths from `configs/path_config(.local).toml`: `get_datapath`, `get_labjournalpath`, `get_qmconfigpath`. |
+| `path_config.py` | Resolve lab paths from `configs/path_config(.local).toml`: `get_datapath`, `get_labjournalpath`, `get_logspath`, `get_qmconfigpath`. |
+| `logging_config.py` | `setup_logging()` — configure the `pyctrl` logger (daily file under `logspath`, console). Not called on import. |
 
 ## Use it
 
@@ -51,11 +52,18 @@ from pyctrl.toolbox.software.save_to_html import save_to_html
 save_to_html(data, figures)   # appends one section to today's lab-journal HTML, returns its path
 ```
 
+**Logging** (once per notebook kernel, before hardware):
+
+```python
+import pyctrl
+pyctrl.setup_logging()   # or: from pyctrl.toolbox.software.logging_config import setup_logging
+```
+
 ## Notes
 
 - Output locations come from `path_config`, i.e. from `configs/path_config(.local).toml` — not
   hardcoded. `get_datapath` (HDF5 root), `get_labjournalpath` (HTML/PPTX root),
-  `get_qmconfigpath` (OPX config).
+  `get_logspath` (daily `pyctrl_YYYY-MM-DD.log` files), `get_qmconfigpath` (OPX config).
 - `*Data` files land under `<datapath>/<ClassName>/<YYYYMMDD>/<ClassName>_<date>_<NNN>.h5`.
 - `save_to_html` opens the journal in Microsoft Edge **only** on the first write that creates
   the day's file; later appends that day don't relaunch the browser.

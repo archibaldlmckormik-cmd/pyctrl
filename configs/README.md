@@ -7,7 +7,7 @@ This folder holds TOML configuration for PyCtrl.
 
 | File | Purpose |
 |------|---------|
-| `path_config.toml` | Example paths (data, lab journal, QM config path). Committed. |
+| `path_config.toml` | Example paths (data, lab journal, logs, QM config path). Committed. |
 | `instr_config.toml` | Example instrument registry and connection settings. Committed. |
 | `qm_base_config.toml` | Quantum Machine / OPX configuration. Committed. |
 | `path_config.local.toml` | **This machine's** paths. Not committed. |
@@ -33,6 +33,7 @@ Passing an explicit config path to `Session(..., config_path=...)` bypasses this
 3. Edit **`path_config.local.toml`**:
    - `datapath` — where experiment data is stored on this PC.
    - `labjournalpath` — lab journal / HTML export root.
+   - `logspath` — folder for PyCtrl log files (`pyctrl_YYYY-MM-DD.log`; required).
    - `qmconfigpath` — path to the QM config file (e.g. `configs/qm_base_config.toml` or a machine-specific copy elsewhere).
 
 4. Edit **`instr_config.local.toml`**:
@@ -50,3 +51,16 @@ Passing an explicit config path to `Session(..., config_path=...)` bypasses this
 - Keep filesystem paths in `path_config` (local on each machine).
 - Avoid duplicating the same setting in both files.
 - When adding a new instrument type to the project, update the tracked `instr_config.toml` template so new machines know the expected structure.
+
+## Logging
+
+PyCtrl does not configure logging on import. In a notebook or script, after path
+config exists:
+
+```python
+import pyctrl
+pyctrl.setup_logging()
+```
+
+Uses `logspath` from the resolved path config. See the main `README.md` for levels
+and `PYCTRL_LOG`.
