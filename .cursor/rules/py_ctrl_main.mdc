@@ -1,0 +1,152 @@
+---
+globs: ["**/*.py"]
+---
+
+# Lab Instrument Control — Project Rules
+
+## Context
+This is a Python codebase for laboratory instrument control, translated from MATLAB.
+The MATLAB source lives in the `matlab/` root (read-only reference).
+The Python target lives in the `pyctrl/` root.
+
+## Python Version
+- Target: Python 3.11
+- Use 3.11-compatible syntax only; avoid 3.12+ features for now
+- When 3.12 features would be meaningfully better, leave a comment: `# TODO: simplify with 3.12`
+
+## Project Architecture reference
+This section describes the overall architecture of the pyctrl codebase.
+It is provided as context, not as a set of instructions. When writing
+or translating code, follow the conventions in other sections, use this to understand where things live and why, and to provide suggestion and reminder if the project goes astray.
+
+pyctrl/
+├── configs/
+│   ├── instr_config.toml           ← instrument names, classes, connection parameters
+│   └── path_config.toml            ← local save paths (gitignored, commit .template version)
+├── hwdrivers/
+│   ├── __init__.py
+│   ├── instrumentsession.py        ← Session class: instrument lifecycle manager
+│   └── <instname>/
+│       ├── __init__.py
+│       ├── <instname>.py           ← instrument driver class
+│       ├── test_<instname>.py      ← connection/sanity test script
+│       └── livetest_<instname>.ipynb  ← interactive notebook for hardware testing
+├── experiments/
+│   ├── __init__.py
+│   └── <expname>.py                ← one file per experiment type
+└── toolbox/
+    ├── hardware/
+    │   ├── __init__.py
+    │   └── <routinename>.py        ← free functions requiring 2+ instruments
+    └── software/
+        ├── __init__.py
+        ├── <routinename>.py        ← free functions requiring no instrument, purely software
+        └── expdata.py              ← dataclasses for experiment output structures
+
+- `hwdrivers/`  — one folder per instrument/instrument type, containing at least:
+    - one main file describing the class-based driver for this instrument type
+    - one test .py file testing connectivity and basic instrument functions. named test_classname
+- `toolbox/hardware`   — reusable free functions acting on instrument hardware objects
+- `toolbox/software`   — reusable free functions acting on data exclusively, no hardware interaction
+- `experiments/` — lightweight experiment classes with a `run()` method
+- keep the config file for instrument (default configdefault.toml) simple and clean, only one entry per intrument, don't worry about missnaming and case sensitivity, that's be fixed in debugging.
+
+
+---
+
+## Hardware Drivers
+
+### General
+- Each instrument is a Python class in its own file, e.g. `hwdrivers/fgen.py`
+- Class name should be descriptive of the instrument, not the brand: `FunctionGenerator`, not `Agilent33500`
+- Brand/model goes in the docstring, not the class name
+- Use `__init__` to open the connection; use `close()` to release it
+- Implement context manager support (`__enter__` / `__exit__`) so drivers can be used with `with` blocks
+- All public parameters should be `@property` with getter and setter
+- Validate inputs in setters; raise `ValueError` with a descriptive message on invalid input
+
+### Communication backends — use in this priority order:
+1. **VISA/GPIB**: use `pyvisa` — `import pyvisa; rm = pyvisa.ResourceManager()`
+2. **Serial/RS232**: use `pyserial` — `import serial`
+3. **USB**: use `pyvisa` with USB resource string if USBTMC; otherwise `pyusb`
+4. **Ethernet/TCP**: use `socket` from stdlib for raw TCP; use `pyvisa` with TCPIP resource string if instrument supports VXI-11 or HiSLIP
+5. **UDP**: use `socket` from stdlib
+
+### pyvisa conventions
+- Always use `instrument.query()` for commands that return a value
+- Always use `instrument.write()` for commands that don't return a value
+- Never use `instrument.ask()` (deprecated alias for `query`)
+- Set explicit timeout on resource open: `instrument.timeout = 5000` (milliseconds)
+- Use `instrument.query('*IDN?')` in `__init__` to verify connection
+
+---
+
+## Routines in /toolbox
+
+- Routines are **free functions** or **standalone classes** in `toolbox/`
+- in 'toolbox/hardware', the functions take at least two instrument objects as explicit arguments, plus physics/experiment parameters.
+- Instrument arguments come first, physics parameters after
+- Name functions as `<action>_and_<result>` or `<action>_<target>`, e.g. `pulse_and_count`, `sweep_voltage`
+- Return values should be numpy arrays or scalars — never raw instrument strings
+- Add a short docstring listing what each instrument argument needs to support (methods/properties)
+
+Example signature style:
+```python
+def ch1_pulse_and_count(fgen, dac, picoh, target_voltage: float, pulse_length: float) -> int:
+    """
+    fgen:  needs .set_pulse_length(t: float) and .pulse()
+    dac:   needs .ch1 (settable float property)
+    picoh: needs .run(), .stop(), .fetch_data() -> int
+    """
+```
+### Data
+- The data will be save in a class/subclasses defined in /toolbox/software/<dataclassdef.py>
+- Encoding and export of experimental results as HDF5 using `h5py`
+- File naming will follow: `YYYYMMDD_HHMMSS_<dataclass_name>.h5`
+- Always save metadata alongside data
+- Use `numpy` for all array operations — never plain Python lists for numerical data
+
+
+---
+
+## Experiments
+
+- Each experiment is a lightweight class in `experiments/`
+- `__init__` receives instrument objects and experiment parameters; stores them as attributes
+- The main logic lives in `run(self) -> xr.Dataset or np.ndarray`
+- No hardware setup or teardown inside the experiment class — that happens in the calling script
+- Prefer keyword arguments at call site for clarity: `RabiSweep(fgen=fgen, dac=dac, voltages=v_array)`
+
+---
+
+
+## Translation from MATLAB
+
+When translating MATLAB code to Python:
+- when translating intrument drivers, in the associated MATLAB folder there might be some ancillary functions, the one that depenenmd only on that instrument can be integrated in the intrument class.
+- MATLAB `properties` with `get.X` / `set.X` → Python `@property` with getter/setter
+- MATLAB `nargin` patterns → Python default argument values or `*args`
+- MATLAB cell arrays `{}` → Python lists `[]`
+- MATLAB structs → Python dataclasses or dicts, prefer dataclasses if structure is fixed
+- MATLAB `end` indexing → Python `-1` indexing
+- MATLAB 1-based indexing → Python 0-based (be careful, check all index arithmetic)
+- MATLAB `fprintf` / `disp` → Python `print()` or `logging.info()`
+- Do not add abstraction layers that were not present in the original MATLAB
+- Preserve the original variable names where they are physically meaningful
+- no need to elaborate on what matlab method/function the translated python code is replacing in the docstring
+
+---
+
+## Style
+
+- Follow PEP8; line length max 100 characters, wildcard up to 120 if it improves lisibility
+- only import packages at the top of the file, never mid-way!
+- Use type hints on all function signatures; omit on obvious local variables
+- always use `logging`, never `print`
+- No bare `except:` clauses — always catch a specific exception
+- catching errors: use logging and logger.error or logger.critical, pass the specific exception / log the trace, and then simply raise
+- Keep files under ~500 lines; split if larger
+- keep the docstrings on all classes and public functions consise, focus on useful information on what the code does
+- when importing packages that might be non-general/particular to an instrument etc (e.g. import serial), do NOT wrap the import in try-catch statements, trust that the package is available in the environment like any other package.
+- all python files start by a comment signing the author and containing the date of creation (author: yannik fontana, creation date: dd.mm.yyyy)
+- for every package/module `__init__.py`, the first instruction after imports must be: `__author__ = "yannik fontana"`

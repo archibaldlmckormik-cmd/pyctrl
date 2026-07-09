@@ -1,0 +1,38 @@
+---
+description: QM / OPX (qm-qua, qualang-tools) gotchas for PyCtrl. Apply when touching the OPX driver, the QM TOML config, or any QUA program.
+globs: hwdrivers/qm_opx/**,configs/qm_*.toml,experiments/**/*opx*.py,experiments/**/*qm*.py
+alwaysApply: false
+---
+
+# QM / OPX rules for PyCtrl
+
+PyCtrl pins (see `PYCTRL_env.yml`): `qm-qua==1.2.6`, `qualang-tools==0.22.0`.
+Always check current pins before answering version-dependent questions; do **not** reason from "latest QM docs" without confirming.
+
+## Hard rules
+
+- **Never assume**. Before suggesting any QM-specific change, follow `.cursor/skills/qm-opx/SKILL.md`.
+- **Subagent dispatch**: when delegating a QM task to a subagent, **always pass `readonly: true`**. Edits to QM code/config happen in the parent agent only, after the subagent reports back.
+- **Doc lookup**: use the doc set that matches the installed `qm-qua` (1.2.x), not "latest". Cross-check against `qm-qua` changelog before recommending an API.
+
+## Config file gotchas (`configs/qm_base_config.toml`)
+
+- `qm-qua >= 1.2.0`: the dict passed to `QuantumMachinesManager.open_qm(config)` must **not** contain a top-level `version` key. The current file still has `version = 1` — flag this.
+- Controllers: `type = "opx1"` for OPX+; OPX1000 / FEM use different schemas — do not silently convert.
+- Pulses → waveforms mapping uses `single` (single-input) or `I`/`Q` (mixedInput). It is **not** `waveform` or `samples`.
+- Waveforms: `type = "constant"` uses key `sample` (scalar); `type = "arbitrary"` uses key `samples` (list).
+- Baked pulse `I_samples` / `Q_samples` must have equal length when both are provided; voltage values are in volts (≤ 0.5 V per OPX+ DAC range).
+- Element `operations` keys must reference an existing pulse name; check after any pulse rename.
+
+## Driver gotchas (`hwdrivers/qm_opx/qm_opx.py`)
+
+- `Opx.__init__` is a normal `__init__`, **not** `@classmethod`.
+- `seconds_to_cycles` is `@classmethod` and returns clock cycles (1 cycle = 4 ns on OPX+).
+- `turn_outputs_on` runs an infinite QUA loop per element and stores the job on `self._running_job`; `turn_outputs_off` halts it.
+- `Opx.close`: halt any running job, then close `self._qm`. There is no `self.qmm.close()` on `QuantumMachinesManager`.
+- `bake_all` uses `qualang_tools.bakery` kwargs `padding_method` and `sampling_rate` (not `padding` / `sampling`); use IQ only when a non-zero Q sample list is provided.
+- `Opx` exposes no `set_voltage` — `aom_calib.py` calling it is a bug.
+
+## When in doubt
+
+Switch to the `qm-opx` skill before making changes. Prefer asking the user over guessing on QM/QUA specifics.

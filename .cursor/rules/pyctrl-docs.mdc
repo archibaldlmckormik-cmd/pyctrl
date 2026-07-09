@@ -1,0 +1,38 @@
+---
+description: Functional documentation style for PyCtrl (docstrings + READMEs). Apply when writing or editing docstrings, READMEs, or module headers.
+globs: **/*.py,**/README.md
+alwaysApply: false
+---
+
+# PyCtrl documentation style
+
+Document **what the user gets and how to use it**, not how the code works. The reader is a
+lab user/collaborator, not a maintainer reading line by line.
+
+## Hard rules
+
+- **Outcome first**: lead with what the function/method/class *does* and what it *produces*
+  (return meaning, units, shapes, files written, hardware state after) — in lab language.
+- **No signature paraphrase**: do not restate parameter names/types that the type hints
+  already give. Add a parameter line only when meaning/units/constraints aren't obvious.
+- **Side effects are part of the contract**: opening a QUA job, blocking until halt, writing
+  HDF5, moving hardware, mutating `self.data` — state these explicitly.
+- **Units & physical meaning**: ns, V, THz, counts, clock cycles — always name them.
+- **Public API only**: skip private `_helpers` and `__init__` boilerplate unless behavior is
+  surprising. Good code is self-explanatory; document the non-obvious.
+- **For deeper work, use the skill**: follow `.cursor/skills/pyctrl-docs/SKILL.md` when
+  documenting a new driver/experiment, refreshing a README, or doing a docs pass.
+
+## PyCtrl conventions to reflect in docs
+
+- Hardware is obtained via `Session.get("<name>")`, where `<name>` is the `instr_config` table.
+- Machine-specific values live in `*.local.toml`, never in code/docstrings as hardcoded truth.
+- Experiments subclass `GenericExp` (`setup → pre_run → run → plot → save`) and have a matching
+  `*Data` class in `toolbox/software/datamanagement/datastructures.py`.
+
+## Anti-patterns (reject these)
+
+- Docstring that just renames type hints (`x: input array. Returns: an array.`).
+- README that is only a file tree or an API index.
+- "See code for details." / narrating the implementation step by step.
+- Documenting every parameter when only one needs a unit or constraint.
