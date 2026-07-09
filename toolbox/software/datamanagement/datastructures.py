@@ -136,7 +136,7 @@ class ExpData:
     """
     timestamp: datetime.datetime = field(default_factory=datetime.datetime.now)
     tag: list[str] = field(default_factory=list)
-    run_time:float = 0.0
+    run_time:float = field(default_factory=float, default=0.0)
     cavity: CavityParameters = field(default_factory=CavityParameters)
     pulses: PulseSet = field(default_factory=PulseSet)
     iterations: IterationSet = field(default_factory=IterationSet)
